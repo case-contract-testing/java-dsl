@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+}
+
+group 'io.contracttesting.contractcase'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+
+repositories {
+    flatDir {
+        dirs("/Users/home/office/maintainer/case-boundary/dist/java/io/contracttesting/contractcase")
+    }
+}
+
+
+dependencies {
+    implementation 'com.diogonunes:JColor:5.5.1'
+    implementation 'io.contract-testing.contractcase:case_boundary:0.6.1'
+    implementation 'org.jetbrains:annotations:23.0.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
