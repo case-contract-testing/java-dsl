@@ -9,7 +9,6 @@ import io.contract_testing.contractcase.case_boundary.IResultPrinter;
 import io.contract_testing.contractcase.case_boundary.PrintableMatchError;
 import io.contract_testing.contractcase.case_boundary.PrintableMessageError;
 import io.contract_testing.contractcase.case_boundary.PrintableTestTitle;
-import io.contracttesting.contractcase.connectors.ExceptionMapper;
 import org.jetbrains.annotations.NotNull;
 
 public class LogPrinter implements ILogPrinter, IResultPrinter {
@@ -81,7 +80,7 @@ public class LogPrinter implements ILogPrinter, IResultPrinter {
               ? "" : "\n" + messageColour.format(additional)));
       return new BoundarySuccess();
     } catch (Exception e) {
-      return ExceptionMapper.map(e);
+      return BoundaryExceptionMapper.map(e);
     }
   }
 
@@ -111,7 +110,7 @@ public class LogPrinter implements ILogPrinter, IResultPrinter {
 
       return new BoundarySuccess();
     } catch (Exception e) {
-      return ExceptionMapper.map(e);
+      return BoundaryExceptionMapper.map(e);
     }
   }
 
@@ -133,7 +132,7 @@ public class LogPrinter implements ILogPrinter, IResultPrinter {
 
       return new BoundarySuccess();
     } catch (Exception e) {
-      return ExceptionMapper.map(e);
+      return BoundaryExceptionMapper.map(e);
     }
   }
 
@@ -151,7 +150,7 @@ public class LogPrinter implements ILogPrinter, IResultPrinter {
 
       return new BoundarySuccess();
     } catch (Exception e) {
-      return ExceptionMapper.map(e);
+      return BoundaryExceptionMapper.map(e);
     }
   }
 }
