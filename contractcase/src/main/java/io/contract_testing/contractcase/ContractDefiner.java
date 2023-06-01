@@ -13,7 +13,6 @@ public class ContractDefiner {
 
     LogPrinter logPrinter = new LogPrinter();
 
-    // TODO figure out how to get versions
     this.definer = new BoundaryContractDefiner(BoundaryConfigMapper.map(config, TEST_RUN_ID),
         logPrinter,
         logPrinter,
