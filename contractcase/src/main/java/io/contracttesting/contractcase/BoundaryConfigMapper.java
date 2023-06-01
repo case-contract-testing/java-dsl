@@ -2,12 +2,63 @@ package io.contracttesting.contractcase;
 
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
 import io.contract_testing.contractcase.case_boundary.UserNamePassword;
+import org.jetbrains.annotations.NotNull;
 
 class BoundaryConfigMapper {
+
+  static <T> ContractCaseBoundaryConfig mapSuccessExample(
+      final IndividualSuccessTestConfig<T> config,
+      final String testRunId) {
+    var builder = makeBuilder(config, testRunId);
+
+    if (config.trigger != null) {
+      if (config.testResponse != null) {
+        builder.triggerAndTest(BoundaryTriggerMapper.map(config.trigger, config.testResponse));
+      } else {
+        throw new ContractCaseConfigurationError(
+            "Must specify `testResponse` if you are specifying a `trigger`");
+      }
+    } else {
+      if (config.testResponse != null) {
+        throw new ContractCaseConfigurationError(
+            "Must specify `trigger` if you are specifying a `testResponse` function");
+      }
+    }
+
+    return builder.build();
+  }
+
+  public static <T> ContractCaseBoundaryConfig mapFailingExample(
+      IndividualFailedTestConfig<T> config,
+      String testRunId) {
+    var builder = makeBuilder(config, testRunId);
+
+    if (config.trigger != null) {
+      if (config.testErrorResponse != null) {
+        builder.triggerAndTest(BoundaryTriggerMapper.map(config.trigger, config.testErrorResponse));
+      } else {
+        throw new ContractCaseConfigurationError(
+            "Must specify `testErrorResponse` if you are specifying a `trigger`");
+      }
+    } else {
+      if (config.testErrorResponse != null) {
+        throw new ContractCaseConfigurationError(
+            "Must specify `trigger` if you are specifying a `testErrorResponse` function");
+      }
+    }
+    
+    return builder.build();
+  }
 
   static ContractCaseBoundaryConfig map(final ContractCaseConfig config,
       final String testRunId) {
 
+    return makeBuilder(config, testRunId).build();
+  }
+
+  @NotNull
+  private static ContractCaseBoundaryConfig.Builder makeBuilder(ContractCaseConfig config,
+      String testRunId) {
     var builder = ContractCaseBoundaryConfig.builder().testRunId(testRunId);
 
     if (config.brokerBaseUrl != null) {
@@ -66,9 +117,10 @@ class BoundaryConfigMapper {
     if (config.stateHandlers != null) {
       builder.stateHandlers(BoundaryStateHandlerMapper.map(config.stateHandlers));
     }
-
-    return builder.build();
+    return builder;
   }
+
+
 }
 
 
