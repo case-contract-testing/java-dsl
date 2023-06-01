@@ -17,7 +17,7 @@ public class ContractDefiner {
     this.definer = new BoundaryContractDefiner(BoundaryConfigMapper.map(config, TEST_RUN_ID),
         logPrinter,
         logPrinter,
-        BoundaryVersionGenerator.VERSIONS);
+        new BoundaryVersionGenerator().getVersions());
   }
 
   public <T> void runExample(ExampleDefinition definition,

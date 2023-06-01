@@ -31,7 +31,7 @@ public class ContractVerifier {
             }
           }
 
-        }, logPrinter, logPrinter, BoundaryVersionGenerator.VERSIONS);
+        }, logPrinter, logPrinter, new BoundaryVersionGenerator().getVersions());
   }
 
   public void runVerification(ContractCaseConfig configOverrides) {

@@ -5,7 +5,10 @@ import java.util.List;
 class BoundaryVersionGenerator {
 
   // TODO: Figure out how to get versions correctly
-  static final List<String> VERSIONS =
-      List.of("Java-DSL@beta");
+
+  List<String> getVersions() {
+    var version = getClass().getPackage().getImplementationVersion();
+    return List.of("Java-DSL@" + (version != null ? version : "UNKNOWN"));
+  }
 
 }
