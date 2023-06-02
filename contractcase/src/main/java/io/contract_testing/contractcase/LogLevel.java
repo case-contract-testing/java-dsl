@@ -1,44 +1,49 @@
 package io.contract_testing.contractcase;
 
-public class LogLevel {
-  // TODO: Get these strings from the boundary
+import io.contract_testing.contractcase.case_boundary.ConfigLogLevelConstants;
+
+/**
+ * Enum for the log level configuration option
+ */
+public enum LogLevel {
 
   /**
    * Print no logs (note, results may still be printed - see the configuration options for
    * printResults
    */
-  public static final LogLevel NONE = new LogLevel("none");
+  NONE(ConfigLogLevelConstants.NONE),
 
   /**
    * Logs when something has gone wrong during the execution of the test framework
    */
-  public static final LogLevel ERROR = new LogLevel("error");
+  ERROR(ConfigLogLevelConstants.ERROR),
 
   /**
    * Logs when it seems likely that there is a misconfiguration
    */
-  public static final LogLevel WARN = new LogLevel("warn");
+  WARN(ConfigLogLevelConstants.WARN),
 
   /**
    * Logs information to help users find out what is happening during their tests
    */
-  public static final LogLevel DEBUG = new LogLevel("debug");
+  DEBUG(ConfigLogLevelConstants.DEBUG),
 
   /**
    * Logs debugging information for ContractCase maintainers. Take care publishing this publicly, as
    * this level may print your secrets.
    */
-  public static final LogLevel MAINTAINER_DEBUG = new LogLevel("maintainerDebug");
+  MAINTAINER_DEBUG(ConfigLogLevelConstants.MAINTAINER_DEBUG),
 
   /**
    * Logs very detailled debugging information for ContractCase maintainers. Take care publishing
    * this publicly, as this level may print your secrets.
    */
-  public static final LogLevel DEEP_MAINTAINER_DEBUG = new LogLevel("deepMaintainerDebug");
+  DEEP_MAINTAINER_DEBUG(
+      ConfigLogLevelConstants.DEEP_MAINTAINER_DEBUG);
 
   private final String level;
 
-  private LogLevel(String level) {
+  LogLevel(String level) {
     this.level = level;
   }
 

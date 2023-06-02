@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TriggerGroups {
 
-  private final Map<String, TriggerGroup<?>> triggerGroups = new HashMap();
+  private final Map<String, TriggerGroup<?>> triggerGroups = new HashMap<>();
 
 
   public <T> void addTriggerGroup(
