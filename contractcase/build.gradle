@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'java-library'
 }
 
 group 'io.contracttesting.contractcase'
@@ -17,8 +17,11 @@ repositories {
     }
 }
 
+def caseCoreVersion = "0.12.1"
 
 dependencies {
+    api "io.contract-testing.contractcase:case_example_mock_types:${caseCoreVersion}"
+    api "io.contract-testing.contractcase:test-equivalence-matchers:${caseCoreVersion}"
     implementation 'com.diogonunes:JColor:5.5.1'
     implementation 'io.contract-testing.contractcase:case_boundary:0.6.1'
     implementation 'org.jetbrains:annotations:23.0.0'
