@@ -10,13 +10,6 @@ repositories {
     mavenCentral()
 }
 
-
-repositories {
-    flatDir {
-        dirs("/Users/home/office/maintainer/case-boundary/dist/java/io/contracttesting/contractcase")
-    }
-}
-
 def caseCoreVersion = "0.12.1"
 
 dependencies {
