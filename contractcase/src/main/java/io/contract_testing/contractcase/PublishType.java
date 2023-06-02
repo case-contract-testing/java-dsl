@@ -14,7 +14,7 @@ public enum PublishType {
   NEVER("NEVER"),
 
   /**
-   * Only publish contracts or verification statuses when in CI according to <a *
+   * Only publish contracts or verification statuses when in CI according to <a
    * href="https://github.com/watson/ci-info#supported-ci-tools">ci-info</a>
    */
   ONLY_IN_CI("ONLY_IN_CI");
