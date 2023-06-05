@@ -19,6 +19,6 @@ jobs:
           package-name: contractcase
           bump-minor-pre-major: true
           bump-patch-for-minor-pre-major: true
-          extra-files: build.gradle
+          extra-files: version.txt
           release-as: 0.1.0
           component: ContractCase

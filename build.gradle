@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'io.contracttesting.contractcase'
-version '0.0.1'
+version rootProject.file('version.txt').text.trim()
 
 repositories {
     mavenLocal()
@@ -13,7 +13,6 @@ repositories {
 def caseCoreVersion = "0.12.2"
 
 dependencies {
-    api("org.junit.jupiter:junit-jupiter-api")
     api "io.contract-testing.contractcase:case_example_mock_types:${caseCoreVersion}"
     api "io.contract-testing.contractcase:test-equivalence-matchers:${caseCoreVersion}"
     implementation 'com.diogonunes:JColor:5.5.1'
@@ -21,7 +20,8 @@ dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    compileOnly("org.junit.jupiter:junit-jupiter")
+    // api("org.junit.jupiter:junit-jupiter-api")
+    // compileOnly("org.junit.jupiter:junit-jupiter")
 }
 
 test {
