@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'io.contracttesting.contractcase'
-version rootProject.file('version.txt').text.trim()
+version "0.0.1" // x-release-please-version
 
 repositories {
     mavenLocal()

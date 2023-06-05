@@ -16,3 +16,11 @@ It exists for making the use of ContractCase idiomatic in Java and the JVM ecosy
 
 Read the [documentation here](https://case.contract-testing.io/docs/intro/).
 
+## Installing
+
+<!-- x-release-please-start-version -->
+_build.gradle_:
+```groovy
+testImplementation "io.contract-testing.contractcase:contractcase:0.0.1"
+```
+<!-- x-release-please-end -->

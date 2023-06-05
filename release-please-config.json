@@ -1,0 +1,16 @@
+{
+  "bootstrap-sha": "3ba66cfe540e4589af814c650d147893c1f0f79f",
+  "include-v-in-tag": true,
+  "release-type": "simple",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "packages": {
+    ".": {
+      "component": "contractcase",
+      "extra-files": [
+        "build.gradle",
+        "README.md"
+      ]
+    }
+  }
+}
