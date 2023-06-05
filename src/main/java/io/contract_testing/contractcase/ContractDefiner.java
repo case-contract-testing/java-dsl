@@ -26,10 +26,28 @@ public class ContractDefiner {
         BoundaryConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)));
   }
 
+  public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition) {
+    this.runExample(
+        definition,
+        IndividualSuccessTestConfig
+            .IndividualSuccessTestConfigBuilder
+            .builder()
+            .build());
+  }
+
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
       IndividualFailedTestConfig<T> additionalConfig) {
     BoundaryResultMapper.map(definer.runRejectingExample(BoundaryDefinitionMapper.map(definition),
         BoundaryConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)));
+  }
+
+  public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {
+    this.runThrowingExample(
+        definition,
+        IndividualFailedTestConfig
+            .IndividualFailedTestConfigBuilder
+            .builder()
+            .build());
   }
 
 }
