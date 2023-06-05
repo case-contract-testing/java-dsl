@@ -1,0 +1,17 @@
+# ContractCase Contract Testing Framework
+
+[![Build and test](https://github.com/case-contract-testing//java-dsl/actions/workflows/build-and-test.yml/badge.svg?branch=main)](https://github.com/case-contract-testing/java-dsl/actions/workflows/build-and-test.yml)
+
+
+<span align="center">
+
+![Case](https://github.com/case-contract-testing/contract-case/raw/main/docs/suitcase.png)
+
+<sub>[Briefcase sticker created by Gohsantosadrive on Flaticon](https://www.flaticon.com/free-stickers/law)</sub>
+
+</span>
+
+These are the Java bindings for the [ContractCase contract testing framework](https://case.contract-testing.io/).
+
+Read the [documentation here](https://case.contract-testing.io/docs/intro/).
+
