@@ -12,6 +12,7 @@
 </span>
 
 These are the Java bindings for the [ContractCase contract testing framework](https://case.contract-testing.io/).
+It exists for making the use of ContractCase idiomatic in Java and the JVM ecosystem.
 
 Read the [documentation here](https://case.contract-testing.io/docs/intro/).
 
