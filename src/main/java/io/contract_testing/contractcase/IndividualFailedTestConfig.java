@@ -7,7 +7,7 @@ public class IndividualFailedTestConfig<T> extends ContractCaseConfig {
   public final Trigger<T> trigger;
   public final TestErrorResponseFunction testErrorResponse;
 
-  public IndividualFailedTestConfig(String providerName, String consumerName, LogLevel logLevel,
+  private IndividualFailedTestConfig(String providerName, String consumerName, LogLevel logLevel,
       String contractDir, String contractFilename, Boolean printResults, Boolean throwOnFail,
       PublishType publish, String brokerBaseUrl, String brokerCiAccessToken,
       BrokerBasicAuthCredentials brokerBasicAuth, String baseUrlUnderTest, TriggerGroups triggers,

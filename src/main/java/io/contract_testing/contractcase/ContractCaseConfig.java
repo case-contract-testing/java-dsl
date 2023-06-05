@@ -99,7 +99,7 @@ public class ContractCaseConfig {
    */
   public final Map<String, StateHandler> stateHandlers;
 
-  public ContractCaseConfig(String providerName, String consumerName, LogLevel logLevel,
+  protected ContractCaseConfig(String providerName, String consumerName, LogLevel logLevel,
       String contractDir, String contractFilename, Boolean printResults, Boolean throwOnFail,
       PublishType publish, String brokerBaseUrl, String brokerCiAccessToken,
       BrokerBasicAuthCredentials brokerBasicAuth, String baseUrlUnderTest, TriggerGroups triggers,
