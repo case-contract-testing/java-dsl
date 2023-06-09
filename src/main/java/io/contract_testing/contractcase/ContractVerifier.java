@@ -13,29 +13,41 @@ public class ContractVerifier {
 
   public ContractVerifier(ContractCaseConfig config) {
     LogPrinter logPrinter = new LogPrinter();
-    this.verifier = new BoundaryContractVerifier(BoundaryConfigMapper.map(config, "VERIFICATION"),
-        new IRunTestCallback() {
-          @Override
-          public @NotNull BoundaryResult runTest(@NotNull String testName,
-              @NotNull IInvokeCoreTest invoker) {
-            // TODO replace this with something that knows about JUnit
-            try {
-              try {
-                BoundaryResultMapper.map(invoker.verify());
-              } catch (Exception e) {
-                System.err.println(e);
-              }
-              return new BoundarySuccess();
-            } catch (Exception e) {
-              return BoundaryExceptionMapper.map(e);
-            }
-          }
 
-        }, logPrinter, logPrinter, new BoundaryVersionGenerator().getVersions());
+    BoundaryContractVerifier verification = null;
+    try {
+      verification = new BoundaryContractVerifier(
+          BoundaryConfigMapper.map(config, "VERIFICATION"),
+          new IRunTestCallback() {
+            @Override
+            public @NotNull BoundaryResult runTest(@NotNull String testName,
+                @NotNull IInvokeCoreTest invoker) {
+              // TODO replace this with something that knows about JUnit
+              try {
+                try {
+                  BoundaryResultMapper.map(invoker.verify());
+                } catch (Exception e) {
+                  System.err.println(e);
+                }
+                return new BoundarySuccess();
+              } catch (Exception e) {
+                return BoundaryExceptionMapper.map(e);
+              }
+            }
+
+          }, logPrinter, logPrinter, new BoundaryVersionGenerator().getVersions());
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+    }
+    this.verifier = verification;
   }
 
   public void runVerification(ContractCaseConfig configOverrides) {
-    this.verifier.runVerification(
-        BoundaryConfigMapper.map(configOverrides, "VERIFICATION"));
+    try {
+      this.verifier.runVerification(
+          BoundaryConfigMapper.map(configOverrides, "VERIFICATION"));
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+    }
   }
 }

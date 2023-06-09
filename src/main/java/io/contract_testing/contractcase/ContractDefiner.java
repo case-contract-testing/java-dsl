@@ -11,19 +11,27 @@ public class ContractDefiner {
 
 
   public ContractDefiner(final @NotNull ContractCaseConfig config) {
-
     LogPrinter logPrinter = new LogPrinter();
-
-    this.definer = new BoundaryContractDefiner(BoundaryConfigMapper.map(config, TEST_RUN_ID),
-        logPrinter,
-        logPrinter,
-        new BoundaryVersionGenerator().getVersions());
+    BoundaryContractDefiner definer = null;
+    try {
+      definer = new BoundaryContractDefiner(BoundaryConfigMapper.map(config, TEST_RUN_ID),
+          logPrinter,
+          logPrinter,
+          new BoundaryVersionGenerator().getVersions());
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+    }
+    this.definer = definer;
   }
 
   public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition,
       final @NotNull IndividualSuccessTestConfig<T> additionalConfig) {
-    BoundaryResultMapper.map(definer.runExample(BoundaryDefinitionMapper.map(definition),
-        BoundaryConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)));
+    try {
+      BoundaryResultMapper.map(definer.runExample(BoundaryDefinitionMapper.map(definition),
+          BoundaryConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)));
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+    }
   }
 
   public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition) {
@@ -37,8 +45,12 @@ public class ContractDefiner {
 
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
       IndividualFailedTestConfig<T> additionalConfig) {
-    BoundaryResultMapper.map(definer.runRejectingExample(BoundaryDefinitionMapper.map(definition),
-        BoundaryConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)));
+    try {
+      BoundaryResultMapper.map(definer.runRejectingExample(BoundaryDefinitionMapper.map(definition),
+          BoundaryConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)));
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+    }
   }
 
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {

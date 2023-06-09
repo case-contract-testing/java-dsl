@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 
 class BoundaryExceptionMapper {
 
-  private static String stackTraceToString(Exception e) {
+  public static String stackTraceToString(Throwable e) {
     return Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).collect(
-        Collectors.joining());
+        Collectors.joining("\n"));
   }
 
   static BoundaryFailure map(Exception e) {
