@@ -1,20 +1,20 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_boundary.BoundaryContractDefiner;
-import io.contract_testing.contractcase.case_example_mock_types.AnyMockDescriptor;
+import io.contract_testing.contractcase.case_example_mock_types.base.AnyMockDescriptor;
+import io.contract_testing.contractcase.client.InternalDefinerClient;
 import org.jetbrains.annotations.NotNull;
 
 public class ContractDefiner {
 
   private static final String TEST_RUN_ID = "JAVA";
-  private final BoundaryContractDefiner definer;
+  private final InternalDefinerClient definer;
 
 
   public ContractDefiner(final @NotNull ContractCaseConfig config) {
     LogPrinter logPrinter = new LogPrinter();
-    BoundaryContractDefiner definer = null;
+    InternalDefinerClient definer = null;
     try {
-      definer = new BoundaryContractDefiner(BoundaryConfigMapper.map(config, TEST_RUN_ID),
+      definer = new InternalDefinerClient(BoundaryConfigMapper.map(config, TEST_RUN_ID),
           logPrinter,
           logPrinter,
           new BoundaryVersionGenerator().getVersions());
@@ -27,14 +27,14 @@ public class ContractDefiner {
   public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition,
       final @NotNull IndividualSuccessTestConfig<T> additionalConfig) {
     try {
-      BoundaryResultMapper.map(definer.runExample(BoundaryDefinitionMapper.map(definition),
+      BoundaryResultMapper.map(definer.runExample(definition.toJSON(),
           BoundaryConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)));
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
     }
   }
 
-  public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition) {
+  public <M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition) {
     this.runExample(
         definition,
         IndividualSuccessTestConfig
@@ -53,7 +53,7 @@ public class ContractDefiner {
     }
   }
 
-  public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {
+  public <M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {
     this.runThrowingExample(
         definition,
         IndividualFailedTestConfig

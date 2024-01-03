@@ -1,29 +1,123 @@
 plugins {
     id 'java-library'
-}
+    id 'java-library-distribution'
+    id 'maven-publish'
+    id "com.google.protobuf" version "0.9.4"
 
-group 'io.contracttesting.contractcase'
+}
+group 'io.contract-testing.contractcase'
 version "0.0.1" // x-release-please-version
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    mavenLocal()
 }
 
-def caseCoreVersion = "0.12.2"
+def caseCoreVersion = "0.13.0"
+def grpcVersion = "1.60.1"
 
 dependencies {
     api "io.contract-testing.contractcase:case_example_mock_types:${caseCoreVersion}"
     api "io.contract-testing.contractcase:test-equivalence-matchers:${caseCoreVersion}"
+    implementation 'io.contract-testing.contractcase:case_boundary:0.6.3'
     implementation 'com.diogonunes:JColor:5.5.1'
-    implementation 'io.contract-testing.contractcase:case_boundary:0.6.2'
+    implementation 'com.google.protobuf:protobuf-java:3.25.1'
+    implementation 'com.google.protobuf:protobuf-java-util:3.25.1'
+    implementation 'com.google.protobuf:protoc:3.25.1'
+    implementation "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+    implementation "io.grpc:grpc-core:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
     implementation 'org.jetbrains:annotations:23.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     // api("org.junit.jupiter:junit-jupiter-api")
     // compileOnly("org.junit.jupiter:junit-jupiter")
 }
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    duplicatesStrategy(DuplicatesStrategy.WARN)
+}
+
+sourceSets {
+    main {
+        java {
+     //       srcDirs 'build/generated/source/proto/main/grpcjava', 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+protobuf {
+    plugins {
+        // Locate a plugin with name 'grpc'. This step is optional.
+        // If you leave it empty, it uses the current directory.
+        // If you don't specify it, protoc will try to use "protoc-gen-grpc" from
+        // system search path.
+        'grpc' {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.60.1'
+        }
+    }
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:3.25.1'
+    }
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.builtins {
+                java {}
+            }
+            task.plugins {
+                grpc {
+                    outputSubDir = 'grpcjava'
+                }
+            }
+        }
+
+    }
+
+}
+
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+
+publishing {
+    publications {
+        contractcase(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+        /*
+        contractcase(MavenPublication) {
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }*/
+    }
+    repositories {
+        mavenLocal()
+    }
 }
