@@ -13,7 +13,7 @@ repositories {
     mavenLocal()
 }
 
-def caseCoreVersion = "0.13.0"
+def caseCoreVersion = "0.15.2"
 def grpcVersion = "1.60.1"
 
 dependencies {
@@ -27,7 +27,7 @@ dependencies {
     implementation "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
     implementation "io.grpc:grpc-core:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
-    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-okhttp:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
     implementation 'org.jetbrains:annotations:23.0.0'

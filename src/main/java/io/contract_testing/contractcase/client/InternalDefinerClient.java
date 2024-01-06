@@ -63,25 +63,26 @@ public class InternalDefinerClient {
 
   public static final String CONTRACT_CASE_JAVA_WRAPPER = "ContractCase Java DSL";
   private static final int DEFAULT_PORT = 50200;
+  public static final String CONTRACT_CASE_TRIGGER_AND_TEST = "ContractCase::TriggerAndTest";
   private final ILogPrinter logPrinter;
   private final IResultPrinter resultPrinter;
   private final List<String> parentVersions;
-  private final ContractCaseConfig config;
   private final StreamObserver<DefinitionRequest> requestObserver;
 
   private final ConcurrentMap<String, CompletableFuture<ContractCaseStream.BoundaryResult>> responseFutures = new ConcurrentHashMap<>();
 
   private final AtomicInteger nextId = new AtomicInteger();
+  private ContractCaseBoundaryConfig boundaryConfig;
 
   private Status errorStatus;
 
 
-  public InternalDefinerClient(final @NotNull ContractCaseBoundaryConfig config,
+  public InternalDefinerClient(final @NotNull ContractCaseBoundaryConfig boundaryConfig,
       final @NotNull ILogPrinter logPrinter,
       final @NotNull IResultPrinter resultPrinter,
       final @NotNull List<String> parentVersions) {
     ResultTypeConstantsCopy.validate();
-    this.config = mapConfig(config);
+
     ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", DEFAULT_PORT)
         .usePlaintext()
         .build();
@@ -91,34 +92,35 @@ public class InternalDefinerClient {
     this.resultPrinter = resultPrinter;
     this.parentVersions = parentVersions;
 
-    BoundaryResultMapper.map(begin());
+    BoundaryResultMapper.map(begin(mapConfig(boundaryConfig)));
   }
 
   private ContractCaseConfig mapConfig(final @NotNull ContractCaseBoundaryConfig config) {
+    this.boundaryConfig = config;
     var builder = ContractCaseConfig.newBuilder();
 
     if (config.getBrokerBasicAuth() != null) {
       var auth = config.getBrokerBasicAuth();
       builder.setBrokerBasicAuth(UsernamePassword.newBuilder()
-          .setPassword(auth.getPassword())
-          .setUsername(auth.getUsername())
+          .setPassword(ValueMapper.map(auth.getPassword()))
+          .setUsername(ValueMapper.map(auth.getUsername()))
           .build());
     }
 
     if (config.getPrintResults() != null) {
-      builder.setPrintResults(config.getPrintResults());
+      builder.setPrintResults(ValueMapper.map(config.getPrintResults()));
     }
     if (config.getThrowOnFail() != null) {
-      builder.setThrowOnFail(config.getThrowOnFail());
+      builder.setThrowOnFail(ValueMapper.map(config.getThrowOnFail()));
     }
     if (config.getTriggerAndTests() != null) {
       config.getTriggerAndTests()
           .forEach((key, value) -> builder.putTriggerAndTests(key,
-              TriggerFunctionHandle.newBuilder().setHandle(key).build()));
+              TriggerFunctionHandle.newBuilder().setHandle(ValueMapper.map(key)).build()));
     }
     if (config.getTriggerAndTest() != null) {
       builder.setTriggerAndTest(TriggerFunctionHandle.newBuilder()
-          .setHandle("ContractCase::TriggerAndTest")
+          .setHandle(ValueMapper.map(CONTRACT_CASE_TRIGGER_AND_TEST))
           .build());
     }
 
@@ -126,41 +128,41 @@ public class InternalDefinerClient {
       // TODO: TEARDOWN FUNCTION
       config.getStateHandlers().forEach((key, value) -> {
         builder.addStateHandlers(StateHandlerHandle.newBuilder()
-            .setHandle(key)
+            .setHandle(ValueMapper.map(key))
             .setStage(Stage.STAGE_SETUP_UNSPECIFIED)
             .build());
       });
     }
 
     if (config.getBaseUrlUnderTest() != null) {
-      builder.setBaseUrlUnderTest(config.getBaseUrlUnderTest());
+      builder.setBaseUrlUnderTest(ValueMapper.map(config.getBaseUrlUnderTest()));
     }
 
     if (config.getBrokerBaseUrl() != null) {
-      builder.setBrokerBaseUrl(config.getBrokerBaseUrl());
+      builder.setBrokerBaseUrl(ValueMapper.map(config.getBrokerBaseUrl()));
     }
     if (config.getBrokerCiAccessToken() != null) {
-      builder.setBrokerCiAccessToken(config.getBrokerCiAccessToken());
+      builder.setBrokerCiAccessToken(ValueMapper.map(config.getBrokerCiAccessToken()));
     }
 
     if (config.getConsumerName() != null) {
-      builder.setConsumerName(config.getConsumerName());
+      builder.setConsumerName(ValueMapper.map(config.getConsumerName()));
     }
     if (config.getContractDir() != null) {
-      builder.setContractDir(config.getContractDir());
+      builder.setContractDir(ValueMapper.map(config.getContractDir()));
     }
     if (config.getContractFilename() != null) {
-      builder.setContractFilename(config.getContractFilename());
+      builder.setContractFilename(ValueMapper.map(config.getContractFilename()));
     }
     if (config.getLogLevel() != null) {
-      builder.setLogLevel(config.getLogLevel());
+      builder.setLogLevel(ValueMapper.map(config.getLogLevel()));
     }
     if (config.getProviderName() != null) {
-      builder.setProviderName(config.getProviderName());
+      builder.setProviderName(ValueMapper.map(config.getProviderName()));
     }
 
     if (config.getPublish() != null) {
-      builder.setPublish(config.getPublish());
+      builder.setPublish(ValueMapper.map(config.getPublish()));
     }
 
     return builder.build();
@@ -176,7 +178,7 @@ public class InternalDefinerClient {
 
     var future = new CompletableFuture<ContractCaseStream.BoundaryResult>();
     responseFutures.put(id, future);
-    requestObserver.onNext(builder.setId(id).build());
+    requestObserver.onNext(builder.setId(ValueMapper.map(id)).build());
 
     try {
       return mapBoundaryResult(future.get(3, TimeUnit.SECONDS));
@@ -211,7 +213,7 @@ public class InternalDefinerClient {
   }
 
   private void sendResponse(Builder builder, String id) {
-    requestObserver.onNext(builder.setId(id).build());
+    requestObserver.onNext(builder.setId(ValueMapper.map(id)).build());
   }
 
   private BoundaryResult mapBoundaryResult(ContractCaseStream.BoundaryResult wireBoundaryResult) {
@@ -229,9 +231,9 @@ public class InternalDefinerClient {
               "undefined wireFailure in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundaryFailure(wireFailure.getKind(),
-            wireFailure.getMessage(),
-            wireFailure.getLocation());
+        return new BoundaryFailure(ValueMapper.map(wireFailure.getKind()),
+            ValueMapper.map(wireFailure.getMessage()),
+            ValueMapper.map(wireFailure.getLocation()));
       }
       case SUCCESS -> {
         return new BoundarySuccess();
@@ -271,15 +273,16 @@ public class InternalDefinerClient {
 
 
   private Map<String, Object> mapJsonMap(Struct map) {
+    var m = map.getFieldsMap();
     // TODO
     throw new RuntimeException("Not implemented");
   }
 
-  private BoundaryResult begin() {
+  private BoundaryResult begin(ContractCaseConfig wireConfig) {
     return executeCallAndWait(DefinitionRequest.newBuilder()
         .setBeginDefinition(BeginDefinitionRequest.newBuilder()
-            .addAllCallerVersions(parentVersions)
-            .setConfig(config)
+            .addAllCallerVersions(parentVersions.stream().map(ValueMapper::map).toList())
+            .setConfig(wireConfig)
             .build()));
   }
 
@@ -297,12 +300,12 @@ public class InternalDefinerClient {
 
   public @NotNull BoundaryResult runExample(JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
-
     var structBuilder = Struct.newBuilder();
 
     try {
+      var string = new ObjectMapper().writeValueAsString(definition);
       JsonFormat.parser()
-          .merge(new ObjectMapper().writeValueAsString(definition), structBuilder);
+          .merge(string, structBuilder);
     } catch (JsonProcessingException | InvalidProtocolBufferException e) {
       throw new RuntimeException(e);
     }
@@ -337,9 +340,9 @@ public class InternalDefinerClient {
         var failure = ((BoundaryFailure) result);
         yield ContractCaseStream.BoundaryResult.newBuilder()
             .setFailure(ResultFailure.newBuilder()
-                .setKind(failure.getKind())
-                .setLocation(failure.getLocation())
-                .setMessage(failure.getMessage())
+                .setKind(ValueMapper.map(failure.getKind()))
+                .setLocation(ValueMapper.map(failure.getLocation()))
+                .setMessage(ValueMapper.map(failure.getMessage()))
                 .build())
             .build();
       }
@@ -357,9 +360,10 @@ public class InternalDefinerClient {
               .build();
       default -> ContractCaseStream.BoundaryResult.newBuilder()
           .setFailure(ResultFailure.newBuilder()
-              .setKind(BoundaryFailureKindConstants.CASE_CORE_ERROR)
-              .setLocation(CONTRACT_CASE_JAVA_WRAPPER)
-              .setMessage("Tried to map an unknown result type: " + result.getResultType())
+              .setKind(ValueMapper.map(BoundaryFailureKindConstants.CASE_CORE_ERROR))
+              .setLocation(ValueMapper.map(CONTRACT_CASE_JAVA_WRAPPER))
+              .setMessage(ValueMapper.map(
+                  "Tried to map an unknown result type: " + result.getResultType()))
               .build())
           .build();
     };
@@ -389,84 +393,104 @@ public class InternalDefinerClient {
                 .setStateHandlerResponse(StateHandlerResponse.newBuilder()
                     .setResult(ContractCaseStream.BoundaryResult.newBuilder()
                         .setSuccess(ResultSuccess.newBuilder().build())
-                        .build())), note.getId());
+                        .build())), ValueMapper.map(note.getId()));
           }
           case LOG_REQUEST -> {
             var logRequest = note.getLogRequest();
             sendResponse(DefinitionRequest.newBuilder()
-                .setLogPrinterResponse(LogPrinterResponse.newBuilder()
-                    .setResult(mapResult(logPrinter.log(logRequest.getLevel(),
-                        logRequest.getTimestamp(),
-                        logRequest.getVersion(),
-                        logRequest.getTypeString(),
-                        logRequest.getLocation(),
-                        logRequest.getMessage(),
-                        logRequest.getAdditional())))), note.getId());
+                    .setLogPrinterResponse(LogPrinterResponse.newBuilder()
+                        .setResult(mapResult(logPrinter.log(ValueMapper.map(logRequest.getLevel()),
+                            ValueMapper.map(logRequest.getTimestamp()),
+                            ValueMapper.map(logRequest.getVersion()),
+                            ValueMapper.map(logRequest.getTypeString()),
+                            ValueMapper.map(logRequest.getLocation()),
+                            ValueMapper.map(logRequest.getMessage()),
+                            ValueMapper.map(logRequest.getAdditional()))))),
+                ValueMapper.map(note.getId()));
           }
           case PRINT_MATCH_ERROR_REQUEST -> {
             var printMatchErrorRequest = note.getPrintMatchErrorRequest();
             sendResponse(DefinitionRequest.newBuilder()
                 .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
                     .setResult(mapResult(resultPrinter.printMatchError(PrintableMatchError.builder()
-                        .kind(printMatchErrorRequest.getKind())
-                        .expected(printMatchErrorRequest.getExpected())
-                        .actual(printMatchErrorRequest.getActual())
-                        .errorTypeTag(printMatchErrorRequest.getErrorTypeTag())
-                        .location(printMatchErrorRequest.getLocation())
-                        .message(printMatchErrorRequest.getMessage())
-                        .build())))), note.getId());
+                        .kind(ValueMapper.map(printMatchErrorRequest.getKind()))
+                        .expected(ValueMapper.map(printMatchErrorRequest.getExpected()))
+                        .actual(ValueMapper.map(printMatchErrorRequest.getActual()))
+                        .errorTypeTag(ValueMapper.map(printMatchErrorRequest.getErrorTypeTag()))
+                        .location(ValueMapper.map(printMatchErrorRequest.getLocation()))
+                        .message(ValueMapper.map(printMatchErrorRequest.getMessage()))
+                        .build())))), ValueMapper.map(note.getId()));
           }
           case PRINT_MESSAGE_ERROR_REQUEST -> {
             var printMessageErrorRequest = note.getPrintMessageErrorRequest();
             sendResponse(DefinitionRequest.newBuilder()
                 .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
                     .setResult(mapResult(resultPrinter.printMessageError(PrintableMessageError.builder()
-                        .errorTypeTag(printMessageErrorRequest.getErrorTypeTag())
-                        .kind(printMessageErrorRequest.getKind())
-                        .location(printMessageErrorRequest.getLocation())
-                        .locationTag(printMessageErrorRequest.getLocationTag())
-                        .message(printMessageErrorRequest.getMessage())
-                        .build())))), note.getId());
+                        .errorTypeTag(ValueMapper.map(printMessageErrorRequest.getErrorTypeTag()))
+                        .kind(ValueMapper.map(printMessageErrorRequest.getKind()))
+                        .location(ValueMapper.map(printMessageErrorRequest.getLocation()))
+                        .locationTag(ValueMapper.map(printMessageErrorRequest.getLocationTag()))
+                        .message(ValueMapper.map(printMessageErrorRequest.getMessage()))
+                        .build())))), ValueMapper.map(note.getId()));
           }
           case PRINT_TEST_TITLE_REQUEST -> {
             var printTestTitleRequest = note.getPrintTestTitleRequest();
             sendResponse(DefinitionRequest.newBuilder()
                 .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
                     .setResult(mapResult(resultPrinter.printTestTitle(PrintableTestTitle.builder()
-                        .title(printTestTitleRequest.getTitle())
-                        .kind(printTestTitleRequest.getKind())
-                        .additionalText(printTestTitleRequest.getAdditionalText())
-                        .icon(printTestTitleRequest.getIcon())
-                        .build())))), note.getId());
+                        .title(ValueMapper.map(printTestTitleRequest.getTitle()))
+                        .kind(ValueMapper.map(printTestTitleRequest.getKind()))
+                        .additionalText(ValueMapper.map(printTestTitleRequest.getAdditionalText()))
+                        .icon(ValueMapper.map(printTestTitleRequest.getIcon()))
+                        .build())))), ValueMapper.map(note.getId()));
           }
           case TRIGGER_FUNCTION_REQUEST -> {
             var triggerFunctionRequest = note.getTriggerFunctionRequest();
-            // TODO Implement this properly
-            sendResponse(DefinitionRequest.newBuilder()
-                .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
-                    .setResult(ContractCaseStream.BoundaryResult.newBuilder()
-                        .setSuccess(ResultSuccess.newBuilder().build())
-                        .build())), note.getId());
+            var handle = ValueMapper.map(triggerFunctionRequest.getTriggerFunction().getHandle());
+            if (handle == null) {
+              throw new ContractCaseCoreError(
+                  "Received a trigger request message with a null trigger handle",
+                  "Java Internal Connector");
+            }
+
+            if (handle.equals(CONTRACT_CASE_TRIGGER_AND_TEST)) {
+              sendResponse(DefinitionRequest.newBuilder()
+                  .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
+                      // TODO fix null case
+                      .setResult(mapResult(boundaryConfig.getTriggerAndTest()
+                          .trigger(ValueMapper.map(triggerFunctionRequest.getConfig()))
+                      ))), ValueMapper.map(note.getId()));
+            } else {
+              sendResponse(DefinitionRequest.newBuilder()
+                  .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
+                      .setResult(mapResult(boundaryConfig.getTriggerAndTests()
+                          .get(handle)
+                          // TODO fix null case
+                          .trigger(ValueMapper.map(triggerFunctionRequest.getConfig()))
+                      ))), ValueMapper.map(note.getId()));
+            }
+
+
           }
           case BEGIN_DEFINITION_RESPONSE -> {
             var beginDefinitionResponse = note.getBeginDefinitionResponse();
-            completeWait(note.getId(), beginDefinitionResponse.getResult());
+            completeWait(ValueMapper.map(note.getId()), beginDefinitionResponse.getResult());
           }
           case RUN_EXAMPLE_RESPONSE -> {
             var runExampleResponse = note.getRunExampleResponse();
-            completeWait(note.getId(), runExampleResponse.getResult());
+            completeWait(ValueMapper.map(note.getId()), runExampleResponse.getResult());
           }
           case RUN_REJECTING_EXAMPLE_RESPONSE -> {
             var runRejectingExampleResponse = note.getRunRejectingExampleResponse();
-            completeWait(note.getId(), runRejectingExampleResponse.getResult());
+            completeWait(ValueMapper.map(note.getId()), runRejectingExampleResponse.getResult());
           }
           case STRIP_MATCHERS_RESPONSE -> {
             var stripMatchersResponse = note.getStripMatchersResponse();
-            completeWait(note.getId(), stripMatchersResponse.getResult());
+            completeWait(ValueMapper.map(note.getId()), stripMatchersResponse.getResult());
           }
           case END_DEFINITION_RESPONSE -> {
             var endDefinitionResponse = note.getEndDefinitionResponse();
-            completeWait(note.getId(), endDefinitionResponse.getResult());
+            completeWait(ValueMapper.map(note.getId()), endDefinitionResponse.getResult());
           }
           case KIND_NOT_SET -> {
             throw new ContractCaseCoreError("Received a message with no kind set",

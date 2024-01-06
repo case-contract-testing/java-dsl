@@ -1,6 +1,6 @@
 package io.contract_testing.contractcase;
 
-import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -29,7 +29,11 @@ public class ExampleDefinition<M extends AnyMockDescriptor> {
   public JsonNode toJSON() {
     var mapper = new ObjectMapper();
     ObjectNode node = mapper.createObjectNode();
-    node.set("definition", mapper.valueToTree(definition.toJSON()));
+    try {
+      node.set("definition", mapper.valueToTree(mapper.readTree(definition.stringify())));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
     node.set("states",
         mapper.createArrayNode()
             .addAll(this.states.stream()
