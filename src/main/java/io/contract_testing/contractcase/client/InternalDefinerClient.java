@@ -19,6 +19,7 @@ import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
 import io.contract_testing.contractcase.case_boundary.ILogPrinter;
 import io.contract_testing.contractcase.case_boundary.IResultPrinter;
+import io.contract_testing.contractcase.case_boundary.ITriggerFunction;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InternalDefinerClient {
 
@@ -103,7 +105,8 @@ public class InternalDefinerClient {
     } catch (TimeoutException e) {
       if (errorStatus != null) {
         return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
-            "ContractCase's internal connection failed while waiting for a request '" + id + "':" + errorStatus,
+            "ContractCase's internal connection failed while waiting for a request '" + id + "':"
+                + errorStatus,
             CONTRACT_CASE_JAVA_WRAPPER);
       }
       return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
@@ -290,21 +293,13 @@ public class InternalDefinerClient {
                   "Java Internal Connector");
             }
 
-            if (handle.equals(CONTRACT_CASE_TRIGGER_AND_TEST)) {
-              sendResponse(DefinitionRequest.newBuilder()
-                  .setResultResponse(ResultResponse.newBuilder()
-                      // TODO fix null case
-                      .setResult(mapResult(boundaryConfig.getTriggerAndTest()
-                          .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
-                      ))), requestId);
-            } else {
-              sendResponse(DefinitionRequest.newBuilder()
-                  .setResultResponse(ResultResponse.newBuilder()
-                      .setResult(mapResult(boundaryConfig.getTriggerAndTests()
-                          .get(handle)
-                          .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
-                      ))), requestId);
-            }
+            ITriggerFunction trigger = getTriggerFunction(handle);
+
+            sendResponse(DefinitionRequest.newBuilder()
+                .setResultResponse(ResultResponse.newBuilder()
+                    .setResult(mapResult(trigger.trigger(ConnectorIncomingMapper.map(
+                        triggerFunctionRequest.getConfig()))
+                    ))), requestId);
           }
           case RESULT_RESPONSE -> {
             completeWait(requestId,
@@ -328,6 +323,31 @@ public class InternalDefinerClient {
       public void onCompleted() {
       }
     });
+  }
+
+  @NotNull
+  private ITriggerFunction getTriggerFunction(String handle) {
+    ITriggerFunction trigger = getTriggerInternal(handle);
+    if (trigger == null) {
+      throw new ContractCaseCoreError(
+          "Unable to trigger the function with handle '" + handle + "', as it is null");
+    }
+    return trigger;
+  }
+
+  @Nullable
+  private ITriggerFunction getTriggerInternal(String handle) {
+    if (handle.equals(CONTRACT_CASE_TRIGGER_AND_TEST)) {
+      return boundaryConfig.getTriggerAndTest();
+    }
+
+    var triggerMap = boundaryConfig.getTriggerAndTests();
+    if (triggerMap == null) {
+      throw new ContractCaseCoreError(
+          "Unable to trigger the function with handle '" + handle
+              + "', as the entire trigger map is null");
+    }
+    return triggerMap.get(handle);
   }
 
 }
