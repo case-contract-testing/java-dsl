@@ -3,7 +3,7 @@ package io.contract_testing.contractcase.client;
 import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapMatchErrorRequest;
 import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapMessageErrorRequest;
 import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapPrintableTestTitle;
-import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapPrinterResponse;
+import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResultResponse;
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResult;
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapRunExampleRequest;
 
@@ -19,7 +19,6 @@ import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
 import io.contract_testing.contractcase.case_boundary.ILogPrinter;
 import io.contract_testing.contractcase.case_boundary.IResultPrinter;
-import io.contract_testing.contractcase.case_boundary.PrintableTestTitle;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
@@ -29,12 +28,8 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionReques
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.EndDefinitionRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.LogPrinterResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.PrintTestTitleRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultPrinterResponse;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.TriggerFunctionResponse;
 import io.contract_testing.contractcase.test_equivalence_matchers.base.AnyMatcher;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -244,7 +239,7 @@ public class InternalDefinerClient {
             final var stateHandlerRunRequest = note.getRunStateHandler();
             // TODO Implement this properly
             sendResponse(DefinitionRequest.newBuilder()
-                .setStateHandlerResponse(StateHandlerResponse.newBuilder()
+                .setResultResponse(ResultResponse.newBuilder()
                     .setResult(ContractCaseStream.BoundaryResult.newBuilder()
                         .setSuccess(ResultSuccess.newBuilder().build())
                         .build())), requestId);
@@ -252,7 +247,7 @@ public class InternalDefinerClient {
           case LOG_REQUEST -> {
             final var logRequest = note.getLogRequest();
             sendResponse(DefinitionRequest.newBuilder()
-                    .setLogPrinterResponse(LogPrinterResponse.newBuilder()
+                    .setResultResponse(ResultResponse.newBuilder()
                         .setResult(mapResult(logPrinter.log(ConnectorIncomingMapper.map(logRequest.getLevel()),
                             ConnectorIncomingMapper.map(logRequest.getTimestamp()),
                             ConnectorIncomingMapper.map(logRequest.getVersion()),
@@ -264,18 +259,18 @@ public class InternalDefinerClient {
           }
           case PRINT_MATCH_ERROR_REQUEST -> {
             final var printMatchErrorRequest = note.getPrintMatchErrorRequest();
-            sendResponse(mapPrinterResponse(resultPrinter.printMatchError(mapMatchErrorRequest(
+            sendResponse(mapResultResponse(resultPrinter.printMatchError(mapMatchErrorRequest(
                 printMatchErrorRequest))), requestId);
           }
           case PRINT_MESSAGE_ERROR_REQUEST -> {
-            sendResponse(mapPrinterResponse(resultPrinter.printMessageError(
+            sendResponse(mapResultResponse(resultPrinter.printMessageError(
                     mapMessageErrorRequest(
                         note.getPrintMessageErrorRequest()))),
                 requestId);
           }
           case PRINT_TEST_TITLE_REQUEST -> {
             final var printTestTitleRequest = note.getPrintTestTitleRequest();
-            sendResponse(mapPrinterResponse(resultPrinter.printTestTitle(mapPrintableTestTitle(
+            sendResponse(mapResultResponse(resultPrinter.printTestTitle(mapPrintableTestTitle(
                 printTestTitleRequest))), requestId);
           }
           case TRIGGER_FUNCTION_REQUEST -> {
@@ -290,43 +285,23 @@ public class InternalDefinerClient {
 
             if (handle.equals(CONTRACT_CASE_TRIGGER_AND_TEST)) {
               sendResponse(DefinitionRequest.newBuilder()
-                  .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
+                  .setResultResponse(ResultResponse.newBuilder()
                       // TODO fix null case
                       .setResult(mapResult(boundaryConfig.getTriggerAndTest()
                           .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
                       ))), requestId);
             } else {
               sendResponse(DefinitionRequest.newBuilder()
-                  .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
+                  .setResultResponse(ResultResponse.newBuilder()
                       .setResult(mapResult(boundaryConfig.getTriggerAndTests()
                           .get(handle)
                           .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
                       ))), requestId);
             }
           }
-          case BEGIN_DEFINITION_RESPONSE -> {
-            var beginDefinitionResponse = note.getBeginDefinitionResponse();
+          case RESULT_RESPONSE -> {
             completeWait(requestId,
-                beginDefinitionResponse.getResult());
-          }
-          case RUN_EXAMPLE_RESPONSE -> {
-            var runExampleResponse = note.getRunExampleResponse();
-            completeWait(requestId, runExampleResponse.getResult());
-          }
-          case RUN_REJECTING_EXAMPLE_RESPONSE -> {
-            var runRejectingExampleResponse = note.getRunRejectingExampleResponse();
-            completeWait(requestId,
-                runRejectingExampleResponse.getResult());
-          }
-          case STRIP_MATCHERS_RESPONSE -> {
-            var stripMatchersResponse = note.getStripMatchersResponse();
-            completeWait(requestId,
-                stripMatchersResponse.getResult());
-          }
-          case END_DEFINITION_RESPONSE -> {
-            var endDefinitionResponse = note.getEndDefinitionResponse();
-            completeWait(requestId,
-                endDefinitionResponse.getResult());
+                note.getResultResponse().getResult());
           }
           case KIND_NOT_SET -> {
             throw new ContractCaseCoreError("Received a message with no kind set",
@@ -347,8 +322,5 @@ public class InternalDefinerClient {
       }
     });
   }
-
-
-
 
 }

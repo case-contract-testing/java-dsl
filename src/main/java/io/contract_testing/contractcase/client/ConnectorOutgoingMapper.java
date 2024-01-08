@@ -12,7 +12,6 @@ import com.google.protobuf.StringValue;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
-import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
@@ -23,10 +22,8 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.LogPrinterResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.LogRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultFailure;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultPrinterResponse;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccessHasAnyPayload;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccessHasMapPayload;
@@ -35,8 +32,6 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHand
 import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHandle.Stage;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.TriggerFunctionHandle;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 class ConnectorOutgoingMapper {
@@ -184,9 +179,9 @@ class ConnectorOutgoingMapper {
   }
 
   @NotNull
-  static ContractCaseStream.DefinitionRequest.Builder mapPrinterResponse(BoundaryResult result) {
+  static ContractCaseStream.DefinitionRequest.Builder mapResultResponse(BoundaryResult result) {
     return DefinitionRequest.newBuilder()
-        .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
+        .setResultResponse(ResultResponse.newBuilder()
             .setResult(mapResult(result)));
   }
 
