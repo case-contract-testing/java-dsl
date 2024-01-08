@@ -83,6 +83,8 @@ public class InternalDefinerClient {
       final @NotNull List<String> parentVersions) {
     ResultTypeConstantsCopy.validate();
 
+    // TODO: Error handling in each case
+
     ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", DEFAULT_PORT)
         .usePlaintext()
         .build();
@@ -245,7 +247,7 @@ public class InternalDefinerClient {
               "undefined wire with any in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundarySuccessWithMap(mapJson(wireWithAny.getPayload()));
+        return new BoundarySuccessWithAny(ValueMapper.map(wireWithAny.getPayload()));
       }
       case SUCCESS_HAS_MAP -> {
         var wireWithMap = wireBoundaryResult.getSuccessHasMap();
@@ -254,7 +256,7 @@ public class InternalDefinerClient {
               "undefined wire with map in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundarySuccessWithMap(mapJsonMap(wireWithMap.getMap()));
+        return new BoundarySuccessWithMap(ValueMapper.map(wireWithMap.getMap()));
       }
       case VALUE_NOT_SET -> throw new ContractCaseCoreError(
           "There was an unset boundaryResult. This is probably a bug in the connector server library.",
@@ -264,18 +266,6 @@ public class InternalDefinerClient {
               + "'. This is probably a bug in the connector server library.",
           CONTRACT_CASE_JAVA_WRAPPER);
     }
-  }
-
-  private Map<String, Object> mapJson(Value payload) {
-    // TODO
-    throw new RuntimeException("Not implemented");
-  }
-
-
-  private Map<String, Object> mapJsonMap(Struct map) {
-    var m = map.getFieldsMap();
-    // TODO
-    throw new RuntimeException("Not implemented");
   }
 
   private BoundaryResult begin(ContractCaseConfig wireConfig) {
@@ -320,13 +310,13 @@ public class InternalDefinerClient {
   public @NotNull BoundaryResult runRejectingExample(@NotNull BoundaryMockDefinition definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
     return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,
-        "runRejectingExample not implemented",
+        "runRejectingExample not implemented", // TODO
         CONTRACT_CASE_JAVA_WRAPPER);
   }
 
   public @NotNull BoundaryResult stripMatchers(@NotNull AnyMatcher matcherOrData) {
     return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,
-        "stripMatchers not implemented",
+        "stripMatchers not implemented", // TODO
         CONTRACT_CASE_JAVA_WRAPPER);
   }
 
@@ -371,12 +361,12 @@ public class InternalDefinerClient {
 
   private static Value mapMapToValue(Object payload) {
     // TODO
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException("Not implemented Client Side");
   }
 
   private static Struct mapMapToStruct(Map<String, Object> payload) {
     // TODO
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException("Not implemented Server Side");
   }
 
   private StreamObserver<DefinitionRequest> createConnection(ContractCaseStub asyncStub) {
@@ -465,12 +455,9 @@ public class InternalDefinerClient {
                   .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
                       .setResult(mapResult(boundaryConfig.getTriggerAndTests()
                           .get(handle)
-                          // TODO fix null case
                           .trigger(ValueMapper.map(triggerFunctionRequest.getConfig()))
                       ))), ValueMapper.map(note.getId()));
             }
-
-
           }
           case BEGIN_DEFINITION_RESPONSE -> {
             var beginDefinitionResponse = note.getBeginDefinitionResponse();

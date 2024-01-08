@@ -9,36 +9,36 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class ValueMapper {
+class ValueMapper {
 
-  public static StringValue map(String s) {
+  static StringValue map(String s) {
     if (s == null) {
       return null;
     }
     return StringValue.newBuilder().setValue(s).build();
   }
 
-  public static BoolValue map(Boolean s) {
+  static BoolValue map(Boolean s) {
     if (s == null) {
       return null;
     }
     return BoolValue.newBuilder().setValue(s).build();
   }
 
-  public static String map(StringValue s) {
+  static String map(StringValue s) {
     if (s == null) {
       return null;
     }
     return s.getValue();
   }
 
-  public static Map<String, Object> map(Struct config) {
+  static Map<String, Object> map(Struct config) {
     return config.getFieldsMap().entrySet().stream()
         .map(entry -> Map.entry(entry.getKey(), ValueMapper.map(entry.getValue())))
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 
-  private static Object map(Value value) {
+  static Object map(Value value) {
     return switch (value.getKindCase()) {
       case NULL_VALUE -> null;
       case NUMBER_VALUE -> value.getNumberValue();
