@@ -1,6 +1,5 @@
 package io.contract_testing.contractcase.client;
 
-import com.google.protobuf.BoolValue;
 import com.google.protobuf.StringValue;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;

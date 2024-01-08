@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 
 class ConnectorOutgoingMapper {
 
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
   static StringValue map(String s) {
     if (s == null) {
       return null;
@@ -75,7 +77,9 @@ class ConnectorOutgoingMapper {
     if (config.getTriggerAndTests() != null) {
       config.getTriggerAndTests()
           .forEach((key, value) -> builder.putTriggerAndTests(key,
-              TriggerFunctionHandle.newBuilder().setHandle(ConnectorOutgoingMapper.map(key)).build()));
+              TriggerFunctionHandle.newBuilder()
+                  .setHandle(ConnectorOutgoingMapper.map(key))
+                  .build()));
     }
     if (config.getTriggerAndTest() != null) {
       builder.setTriggerAndTest(TriggerFunctionHandle.newBuilder()
@@ -131,21 +135,14 @@ class ConnectorOutgoingMapper {
   @NotNull
   static ContractCaseStream.DefinitionRequest.Builder mapRunExampleRequest(JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
-    var structBuilder = Struct.newBuilder();
-
-    try {
-      var string = new ObjectMapper().writeValueAsString(definition);
-      JsonFormat.parser()
-          .merge(string, structBuilder);
-    } catch (JsonProcessingException | InvalidProtocolBufferException e) {
-      throw new RuntimeException(e);
-    }
+    final var structBuilder = getStructBuilder(definition);
     return DefinitionRequest.newBuilder()
         .setRunExample(RunExampleRequest.newBuilder()
             .setConfig(ConnectorOutgoingMapper.mapConfig(runConfig)) // TODO handle additional state handlers or triggers
             .setExampleDefinition(structBuilder)
             .build());
   }
+
 
   @NotNull
   static ContractCaseStream.BoundaryResult mapResult(@NotNull BoundaryResult result) {
@@ -186,19 +183,6 @@ class ConnectorOutgoingMapper {
     };
   }
 
-
-
-  private static Value mapMapToValue(Object payload) {
-    // TODO
-    throw new RuntimeException("Not implemented Client Side");
-  }
-
-  private static Struct mapMapToStruct(Map<String, Object> payload) {
-    // TODO
-    throw new RuntimeException("Not implemented Server Side");
-  }
-
-
   @NotNull
   static ContractCaseStream.DefinitionRequest.Builder mapPrinterResponse(BoundaryResult result) {
     return DefinitionRequest.newBuilder()
@@ -206,4 +190,26 @@ class ConnectorOutgoingMapper {
             .setResult(mapResult(result)));
   }
 
+  private static Value mapMapToValue(Object payload) {
+    return Value.newBuilder()
+        .setStructValue(getStructBuilder(objectMapper.valueToTree(payload)).build())
+        .build();
+  }
+
+  private static Struct mapMapToStruct(Map<String, Object> payload) {
+    return getStructBuilder(objectMapper.valueToTree(payload)).build();
+  }
+
+  @NotNull
+  private static Struct.Builder getStructBuilder(JsonNode definition) {
+    final var structBuilder = Struct.newBuilder();
+
+    try {
+      JsonFormat.parser()
+          .merge(objectMapper.writeValueAsString(definition), structBuilder);
+    } catch (JsonProcessingException | InvalidProtocolBufferException e) {
+      throw new RuntimeException(e);
+    }
+    return structBuilder;
+  }
 }
