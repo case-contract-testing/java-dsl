@@ -1,12 +1,13 @@
 package io.contract_testing.contractcase.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapMatchErrorRequest;
+import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapMessageErrorRequest;
+import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.mapPrintableTestTitle;
+import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapPrinterResponse;
+import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResult;
+import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapRunExampleRequest;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Struct;
-import com.google.protobuf.Value;
-import com.google.protobuf.util.JsonFormat;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
@@ -18,30 +19,21 @@ import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
 import io.contract_testing.contractcase.case_boundary.ILogPrinter;
 import io.contract_testing.contractcase.case_boundary.IResultPrinter;
-import io.contract_testing.contractcase.case_boundary.PrintableMatchError;
-import io.contract_testing.contractcase.case_boundary.PrintableMessageError;
 import io.contract_testing.contractcase.case_boundary.PrintableTestTitle;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BeginDefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.EndDefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.LogPrinterResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultFailure;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.PrintTestTitleRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultPrinterResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccessHasAnyPayload;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccessHasMapPayload;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.RunExampleRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHandle;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHandle.Stage;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.TriggerFunctionHandle;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.TriggerFunctionResponse;
 import io.contract_testing.contractcase.test_equivalence_matchers.base.AnyMatcher;
 import io.grpc.ManagedChannel;
@@ -49,7 +41,6 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -94,81 +85,11 @@ public class InternalDefinerClient {
     this.resultPrinter = resultPrinter;
     this.parentVersions = parentVersions;
 
-    BoundaryResultMapper.map(begin(mapConfig(boundaryConfig)));
+    this.boundaryConfig = boundaryConfig;
+
+    BoundaryResultMapper.map(begin(ConnectorOutgoingMapper.mapConfig(this.boundaryConfig)));
   }
 
-  private ContractCaseConfig mapConfig(final @NotNull ContractCaseBoundaryConfig config) {
-    this.boundaryConfig = config;
-    var builder = ContractCaseConfig.newBuilder();
-
-    if (config.getBrokerBasicAuth() != null) {
-      var auth = config.getBrokerBasicAuth();
-      builder.setBrokerBasicAuth(UsernamePassword.newBuilder()
-          .setPassword(ValueMapper.map(auth.getPassword()))
-          .setUsername(ValueMapper.map(auth.getUsername()))
-          .build());
-    }
-
-    if (config.getPrintResults() != null) {
-      builder.setPrintResults(ValueMapper.map(config.getPrintResults()));
-    }
-    if (config.getThrowOnFail() != null) {
-      builder.setThrowOnFail(ValueMapper.map(config.getThrowOnFail()));
-    }
-    if (config.getTriggerAndTests() != null) {
-      config.getTriggerAndTests()
-          .forEach((key, value) -> builder.putTriggerAndTests(key,
-              TriggerFunctionHandle.newBuilder().setHandle(ValueMapper.map(key)).build()));
-    }
-    if (config.getTriggerAndTest() != null) {
-      builder.setTriggerAndTest(TriggerFunctionHandle.newBuilder()
-          .setHandle(ValueMapper.map(CONTRACT_CASE_TRIGGER_AND_TEST))
-          .build());
-    }
-
-    if (config.getStateHandlers() != null) {
-      // TODO: TEARDOWN FUNCTION
-      config.getStateHandlers().forEach((key, value) -> {
-        builder.addStateHandlers(StateHandlerHandle.newBuilder()
-            .setHandle(ValueMapper.map(key))
-            .setStage(Stage.STAGE_SETUP_UNSPECIFIED)
-            .build());
-      });
-    }
-
-    if (config.getBaseUrlUnderTest() != null) {
-      builder.setBaseUrlUnderTest(ValueMapper.map(config.getBaseUrlUnderTest()));
-    }
-
-    if (config.getBrokerBaseUrl() != null) {
-      builder.setBrokerBaseUrl(ValueMapper.map(config.getBrokerBaseUrl()));
-    }
-    if (config.getBrokerCiAccessToken() != null) {
-      builder.setBrokerCiAccessToken(ValueMapper.map(config.getBrokerCiAccessToken()));
-    }
-
-    if (config.getConsumerName() != null) {
-      builder.setConsumerName(ValueMapper.map(config.getConsumerName()));
-    }
-    if (config.getContractDir() != null) {
-      builder.setContractDir(ValueMapper.map(config.getContractDir()));
-    }
-    if (config.getContractFilename() != null) {
-      builder.setContractFilename(ValueMapper.map(config.getContractFilename()));
-    }
-    if (config.getLogLevel() != null) {
-      builder.setLogLevel(ValueMapper.map(config.getLogLevel()));
-    }
-    if (config.getProviderName() != null) {
-      builder.setProviderName(ValueMapper.map(config.getProviderName()));
-    }
-
-    if (config.getPublish() != null) {
-      builder.setPublish(ValueMapper.map(config.getPublish()));
-    }
-
-    return builder.build();
-  }
 
   private BoundaryResult executeCallAndWait(Builder builder) {
     var id = "" + nextId.getAndIncrement();
@@ -180,7 +101,7 @@ public class InternalDefinerClient {
 
     var future = new CompletableFuture<ContractCaseStream.BoundaryResult>();
     responseFutures.put(id, future);
-    requestObserver.onNext(builder.setId(ValueMapper.map(id)).build());
+    requestObserver.onNext(builder.setId(ConnectorOutgoingMapper.map(id)).build());
 
     try {
       return mapBoundaryResult(future.get(3, TimeUnit.SECONDS));
@@ -215,7 +136,7 @@ public class InternalDefinerClient {
   }
 
   private void sendResponse(Builder builder, String id) {
-    requestObserver.onNext(builder.setId(ValueMapper.map(id)).build());
+    requestObserver.onNext(builder.setId(ConnectorOutgoingMapper.map(id)).build());
   }
 
   private BoundaryResult mapBoundaryResult(ContractCaseStream.BoundaryResult wireBoundaryResult) {
@@ -233,9 +154,9 @@ public class InternalDefinerClient {
               "undefined wireFailure in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundaryFailure(ValueMapper.map(wireFailure.getKind()),
-            ValueMapper.map(wireFailure.getMessage()),
-            ValueMapper.map(wireFailure.getLocation()));
+        return new BoundaryFailure(ConnectorIncomingMapper.map(wireFailure.getKind()),
+            ConnectorIncomingMapper.map(wireFailure.getMessage()),
+            ConnectorIncomingMapper.map(wireFailure.getLocation()));
       }
       case SUCCESS -> {
         return new BoundarySuccess();
@@ -247,7 +168,7 @@ public class InternalDefinerClient {
               "undefined wire with any in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundarySuccessWithAny(ValueMapper.map(wireWithAny.getPayload()));
+        return new BoundarySuccessWithAny(ConnectorIncomingMapper.map(wireWithAny.getPayload()));
       }
       case SUCCESS_HAS_MAP -> {
         var wireWithMap = wireBoundaryResult.getSuccessHasMap();
@@ -256,7 +177,7 @@ public class InternalDefinerClient {
               "undefined wire with map in a boundary result. This is probably an error in the connector server library.",
               CONTRACT_CASE_JAVA_WRAPPER);
         }
-        return new BoundarySuccessWithMap(ValueMapper.map(wireWithMap.getMap()));
+        return new BoundarySuccessWithMap(ConnectorIncomingMapper.map(wireWithMap.getMap()));
       }
       case VALUE_NOT_SET -> throw new ContractCaseCoreError(
           "There was an unset boundaryResult. This is probably a bug in the connector server library.",
@@ -271,7 +192,9 @@ public class InternalDefinerClient {
   private BoundaryResult begin(ContractCaseConfig wireConfig) {
     return executeCallAndWait(DefinitionRequest.newBuilder()
         .setBeginDefinition(BeginDefinitionRequest.newBuilder()
-            .addAllCallerVersions(parentVersions.stream().map(ValueMapper::map).toList())
+            .addAllCallerVersions(parentVersions.stream()
+                .map(ConnectorOutgoingMapper::map)
+                .toList())
             .setConfig(wireConfig)
             .build()));
   }
@@ -290,22 +213,11 @@ public class InternalDefinerClient {
 
   public @NotNull BoundaryResult runExample(JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
-    var structBuilder = Struct.newBuilder();
-
-    try {
-      var string = new ObjectMapper().writeValueAsString(definition);
-      JsonFormat.parser()
-          .merge(string, structBuilder);
-    } catch (JsonProcessingException | InvalidProtocolBufferException e) {
-      throw new RuntimeException(e);
-    }
-
-    return executeCallAndWait(DefinitionRequest.newBuilder()
-        .setRunExample(RunExampleRequest.newBuilder()
-            .setConfig(mapConfig(runConfig)) // TODO handle additional state handlers or triggers
-            .setExampleDefinition(structBuilder)
-            .build()));
+    return executeCallAndWait(mapRunExampleRequest(
+        definition,
+        runConfig));
   }
+
 
   public @NotNull BoundaryResult runRejectingExample(@NotNull BoundaryMockDefinition definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
@@ -320,123 +232,56 @@ public class InternalDefinerClient {
         CONTRACT_CASE_JAVA_WRAPPER);
   }
 
-  @NotNull
-  private static ContractCaseStream.BoundaryResult mapResult(@NotNull BoundaryResult result) {
-    return switch (result.getResultType()) {
-      case ResultTypeConstantsCopy.RESULT_SUCCESS -> ContractCaseStream.BoundaryResult.newBuilder()
-          .setSuccess(ResultSuccess.newBuilder().build())
-          .build();
-      case ResultTypeConstantsCopy.RESULT_FAILURE -> {
-        var failure = ((BoundaryFailure) result);
-        yield ContractCaseStream.BoundaryResult.newBuilder()
-            .setFailure(ResultFailure.newBuilder()
-                .setKind(ValueMapper.map(failure.getKind()))
-                .setLocation(ValueMapper.map(failure.getLocation()))
-                .setMessage(ValueMapper.map(failure.getMessage()))
-                .build())
-            .build();
-      }
-      case ResultTypeConstantsCopy.RESULT_SUCCESS_HAS_MAP_PAYLOAD ->
-          ContractCaseStream.BoundaryResult.newBuilder()
-              .setSuccessHasMap(ResultSuccessHasMapPayload.newBuilder()
-                  .setMap(mapMapToStruct(((BoundarySuccessWithMap) result).getPayload()))
-                  .build())
-              .build();
-      case ResultTypeConstantsCopy.RESULT_SUCCESS_HAS_ANY_PAYLOAD ->
-          ContractCaseStream.BoundaryResult.newBuilder()
-              .setSuccessHasAny(ResultSuccessHasAnyPayload.newBuilder()
-                  .setPayload(mapMapToValue(((BoundarySuccessWithAny) result).getPayload()))
-                  .build())
-              .build();
-      default -> ContractCaseStream.BoundaryResult.newBuilder()
-          .setFailure(ResultFailure.newBuilder()
-              .setKind(ValueMapper.map(BoundaryFailureKindConstants.CASE_CORE_ERROR))
-              .setLocation(ValueMapper.map(CONTRACT_CASE_JAVA_WRAPPER))
-              .setMessage(ValueMapper.map(
-                  "Tried to map an unknown result type: " + result.getResultType()))
-              .build())
-          .build();
-    };
-  }
-
-  private static Value mapMapToValue(Object payload) {
-    // TODO
-    throw new RuntimeException("Not implemented Client Side");
-  }
-
-  private static Struct mapMapToStruct(Map<String, Object> payload) {
-    // TODO
-    throw new RuntimeException("Not implemented Server Side");
-  }
 
   private StreamObserver<DefinitionRequest> createConnection(ContractCaseStub asyncStub) {
     return asyncStub.contractDefinition(new StreamObserver<>() {
-
       @Override
       public void onNext(DefinitionResponse note) {
         /* For when we receive messages from the server */
+        final var requestId = ConnectorIncomingMapper.map(note.getId());
         switch (note.getKindCase()) {
           case RUN_STATE_HANDLER -> {
-            var stateHandlerRunRequest = note.getRunStateHandler();
+            final var stateHandlerRunRequest = note.getRunStateHandler();
             // TODO Implement this properly
             sendResponse(DefinitionRequest.newBuilder()
                 .setStateHandlerResponse(StateHandlerResponse.newBuilder()
                     .setResult(ContractCaseStream.BoundaryResult.newBuilder()
                         .setSuccess(ResultSuccess.newBuilder().build())
-                        .build())), ValueMapper.map(note.getId()));
+                        .build())), requestId);
           }
           case LOG_REQUEST -> {
-            var logRequest = note.getLogRequest();
+            final var logRequest = note.getLogRequest();
             sendResponse(DefinitionRequest.newBuilder()
                     .setLogPrinterResponse(LogPrinterResponse.newBuilder()
-                        .setResult(mapResult(logPrinter.log(ValueMapper.map(logRequest.getLevel()),
-                            ValueMapper.map(logRequest.getTimestamp()),
-                            ValueMapper.map(logRequest.getVersion()),
-                            ValueMapper.map(logRequest.getTypeString()),
-                            ValueMapper.map(logRequest.getLocation()),
-                            ValueMapper.map(logRequest.getMessage()),
-                            ValueMapper.map(logRequest.getAdditional()))))),
-                ValueMapper.map(note.getId()));
+                        .setResult(mapResult(logPrinter.log(ConnectorIncomingMapper.map(logRequest.getLevel()),
+                            ConnectorIncomingMapper.map(logRequest.getTimestamp()),
+                            ConnectorIncomingMapper.map(logRequest.getVersion()),
+                            ConnectorIncomingMapper.map(logRequest.getTypeString()),
+                            ConnectorIncomingMapper.map(logRequest.getLocation()),
+                            ConnectorIncomingMapper.map(logRequest.getMessage()),
+                            ConnectorIncomingMapper.map(logRequest.getAdditional()))))),
+                requestId);
           }
           case PRINT_MATCH_ERROR_REQUEST -> {
-            var printMatchErrorRequest = note.getPrintMatchErrorRequest();
-            sendResponse(DefinitionRequest.newBuilder()
-                .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
-                    .setResult(mapResult(resultPrinter.printMatchError(PrintableMatchError.builder()
-                        .kind(ValueMapper.map(printMatchErrorRequest.getKind()))
-                        .expected(ValueMapper.map(printMatchErrorRequest.getExpected()))
-                        .actual(ValueMapper.map(printMatchErrorRequest.getActual()))
-                        .errorTypeTag(ValueMapper.map(printMatchErrorRequest.getErrorTypeTag()))
-                        .location(ValueMapper.map(printMatchErrorRequest.getLocation()))
-                        .message(ValueMapper.map(printMatchErrorRequest.getMessage()))
-                        .build())))), ValueMapper.map(note.getId()));
+            final var printMatchErrorRequest = note.getPrintMatchErrorRequest();
+            sendResponse(mapPrinterResponse(resultPrinter.printMatchError(mapMatchErrorRequest(
+                printMatchErrorRequest))), requestId);
           }
           case PRINT_MESSAGE_ERROR_REQUEST -> {
-            var printMessageErrorRequest = note.getPrintMessageErrorRequest();
-            sendResponse(DefinitionRequest.newBuilder()
-                .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
-                    .setResult(mapResult(resultPrinter.printMessageError(PrintableMessageError.builder()
-                        .errorTypeTag(ValueMapper.map(printMessageErrorRequest.getErrorTypeTag()))
-                        .kind(ValueMapper.map(printMessageErrorRequest.getKind()))
-                        .location(ValueMapper.map(printMessageErrorRequest.getLocation()))
-                        .locationTag(ValueMapper.map(printMessageErrorRequest.getLocationTag()))
-                        .message(ValueMapper.map(printMessageErrorRequest.getMessage()))
-                        .build())))), ValueMapper.map(note.getId()));
+            sendResponse(mapPrinterResponse(resultPrinter.printMessageError(
+                    mapMessageErrorRequest(
+                        note.getPrintMessageErrorRequest()))),
+                requestId);
           }
           case PRINT_TEST_TITLE_REQUEST -> {
-            var printTestTitleRequest = note.getPrintTestTitleRequest();
-            sendResponse(DefinitionRequest.newBuilder()
-                .setResultPrinterResponse(ResultPrinterResponse.newBuilder()
-                    .setResult(mapResult(resultPrinter.printTestTitle(PrintableTestTitle.builder()
-                        .title(ValueMapper.map(printTestTitleRequest.getTitle()))
-                        .kind(ValueMapper.map(printTestTitleRequest.getKind()))
-                        .additionalText(ValueMapper.map(printTestTitleRequest.getAdditionalText()))
-                        .icon(ValueMapper.map(printTestTitleRequest.getIcon()))
-                        .build())))), ValueMapper.map(note.getId()));
+            final var printTestTitleRequest = note.getPrintTestTitleRequest();
+            sendResponse(mapPrinterResponse(resultPrinter.printTestTitle(mapPrintableTestTitle(
+                printTestTitleRequest))), requestId);
           }
           case TRIGGER_FUNCTION_REQUEST -> {
             var triggerFunctionRequest = note.getTriggerFunctionRequest();
-            var handle = ValueMapper.map(triggerFunctionRequest.getTriggerFunction().getHandle());
+            var handle = ConnectorIncomingMapper.map(triggerFunctionRequest.getTriggerFunction()
+                .getHandle());
             if (handle == null) {
               throw new ContractCaseCoreError(
                   "Received a trigger request message with a null trigger handle",
@@ -448,36 +293,40 @@ public class InternalDefinerClient {
                   .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
                       // TODO fix null case
                       .setResult(mapResult(boundaryConfig.getTriggerAndTest()
-                          .trigger(ValueMapper.map(triggerFunctionRequest.getConfig()))
-                      ))), ValueMapper.map(note.getId()));
+                          .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
+                      ))), requestId);
             } else {
               sendResponse(DefinitionRequest.newBuilder()
                   .setTriggerFunctionResponse(TriggerFunctionResponse.newBuilder()
                       .setResult(mapResult(boundaryConfig.getTriggerAndTests()
                           .get(handle)
-                          .trigger(ValueMapper.map(triggerFunctionRequest.getConfig()))
-                      ))), ValueMapper.map(note.getId()));
+                          .trigger(ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()))
+                      ))), requestId);
             }
           }
           case BEGIN_DEFINITION_RESPONSE -> {
             var beginDefinitionResponse = note.getBeginDefinitionResponse();
-            completeWait(ValueMapper.map(note.getId()), beginDefinitionResponse.getResult());
+            completeWait(requestId,
+                beginDefinitionResponse.getResult());
           }
           case RUN_EXAMPLE_RESPONSE -> {
             var runExampleResponse = note.getRunExampleResponse();
-            completeWait(ValueMapper.map(note.getId()), runExampleResponse.getResult());
+            completeWait(requestId, runExampleResponse.getResult());
           }
           case RUN_REJECTING_EXAMPLE_RESPONSE -> {
             var runRejectingExampleResponse = note.getRunRejectingExampleResponse();
-            completeWait(ValueMapper.map(note.getId()), runRejectingExampleResponse.getResult());
+            completeWait(requestId,
+                runRejectingExampleResponse.getResult());
           }
           case STRIP_MATCHERS_RESPONSE -> {
             var stripMatchersResponse = note.getStripMatchersResponse();
-            completeWait(ValueMapper.map(note.getId()), stripMatchersResponse.getResult());
+            completeWait(requestId,
+                stripMatchersResponse.getResult());
           }
           case END_DEFINITION_RESPONSE -> {
             var endDefinitionResponse = note.getEndDefinitionResponse();
-            completeWait(ValueMapper.map(note.getId()), endDefinitionResponse.getResult());
+            completeWait(requestId,
+                endDefinitionResponse.getResult());
           }
           case KIND_NOT_SET -> {
             throw new ContractCaseCoreError("Received a message with no kind set",
@@ -498,6 +347,8 @@ public class InternalDefinerClient {
       }
     });
   }
+
+
 
 
 }
