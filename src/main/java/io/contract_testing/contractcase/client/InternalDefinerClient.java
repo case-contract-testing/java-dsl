@@ -136,7 +136,7 @@ public class InternalDefinerClient {
   }
 
   private void maintainerLog(String s) {
-    System.err.println(s);
+    /*System.err.println(s);*/
   }
 
   private void sendResponse(Builder builder, String id) {
@@ -205,14 +205,11 @@ public class InternalDefinerClient {
 
 
   public @NotNull BoundaryResult endRecord() {
-    requestObserver.onNext(DefinitionRequest.newBuilder()
-        .setEndDefinition(EndDefinitionRequest.newBuilder().build())
-        .build());
-
+    var result = executeCallAndWait(DefinitionRequest.newBuilder()
+        .setEndDefinition(EndDefinitionRequest.newBuilder().build()));
     requestObserver.onCompleted();
-    return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,
-        "endRecord not implemented",
-        CONTRACT_CASE_JAVA_WRAPPER); // TODO
+
+    return result;
   }
 
   public @NotNull BoundaryResult runExample(JsonNode definition,

@@ -24,6 +24,10 @@ public class ContractDefiner {
     this.definer = definer;
   }
 
+  public void endRecord() {
+    BoundaryResultMapper.map(this.definer.endRecord());
+  }
+
   public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition,
       final @NotNull IndividualSuccessTestConfig<T> additionalConfig) {
     try {
