@@ -99,19 +99,19 @@ public class InternalDefinerClient {
     requestObserver.onNext(builder.setId(ConnectorOutgoingMapper.map(id)).build());
 
     try {
-      return mapBoundaryResult(future.get(3, TimeUnit.SECONDS));
+      return mapBoundaryResult(future.get(60, TimeUnit.SECONDS));
     } catch (TimeoutException e) {
       if (errorStatus != null) {
         return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
-            "ContractCase's internal connection failed while waiting for a request: " + errorStatus,
+            "ContractCase's internal connection failed while waiting for a request '" + id + "':" + errorStatus,
             CONTRACT_CASE_JAVA_WRAPPER);
       }
       return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
-          "Timed out waiting for internal connection to ContractCase",
+          "Timed out waiting for internal connection to ContractCase for message '" + id + "'",
           CONTRACT_CASE_JAVA_WRAPPER);
     } catch (ExecutionException e) {
       return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,
-          "Failed waiting for a response: " + e.getMessage(),
+          "Failed waiting for a response '" + id + "':" + e.getMessage(),
           CONTRACT_CASE_JAVA_WRAPPER);
     } catch (InterruptedException e) {
       return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
@@ -121,6 +121,8 @@ public class InternalDefinerClient {
   }
 
   private void completeWait(String id, ContractCaseStream.BoundaryResult result) {
+    maintainerLog("Completing wait for: " + id);
+
     var future = responseFutures.get(id);
     if (future == null) {
       throw new ContractCaseCoreError(
@@ -128,6 +130,10 @@ public class InternalDefinerClient {
           CONTRACT_CASE_JAVA_WRAPPER);
     }
     responseFutures.get(id).complete(result);
+  }
+
+  private void maintainerLog(String s) {
+    System.err.println(s);
   }
 
   private void sendResponse(Builder builder, String id) {
@@ -208,6 +214,7 @@ public class InternalDefinerClient {
 
   public @NotNull BoundaryResult runExample(JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
+    this.boundaryConfig = runConfig;
     return executeCallAndWait(mapRunExampleRequest(
         definition,
         runConfig));
