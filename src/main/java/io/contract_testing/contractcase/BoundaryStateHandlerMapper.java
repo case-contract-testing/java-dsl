@@ -2,7 +2,6 @@ package io.contract_testing.contractcase;
 
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundaryStateHandler;
-import io.contract_testing.contractcase.case_boundary.BoundaryStateHandlerWithTeardown;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccess;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import java.util.HashMap;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 class BoundaryStateHandlerMapper {
 
-  public static Map<String, ? extends BoundaryStateHandler> map(
+  public static Map<String, BoundaryStateHandler> map(
       Map<String, StateHandler> stateHandlers) {
     var ret = new HashMap<String, BoundaryStateHandler>();
 
@@ -20,9 +19,9 @@ class BoundaryStateHandlerMapper {
     return ret;
   }
 
-  private static BoundaryStateHandlerWithTeardown map(StateHandler handler) {
+  private static BoundaryStateHandler map(StateHandler handler) {
 
-    return new BoundaryStateHandlerWithTeardown() {
+    return new BoundaryStateHandler() {
 
       @Override
       public @NotNull BoundaryResult setup() {

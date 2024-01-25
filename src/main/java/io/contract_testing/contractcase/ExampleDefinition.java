@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.contract_testing.contractcase.case_example_mock_types.base.AnyMockDescriptor;
+import io.contract_testing.contractcase.case_example_mock_types.mocks.base.AnyMockDescriptor;
 import java.util.List;
 import java.util.function.Function;
 

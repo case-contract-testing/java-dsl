@@ -13,13 +13,14 @@ repositories {
     mavenLocal()
 }
 
-def caseCoreVersion = "0.15.2"
+def caseCoreVersion = "0.15.4"
+def caseBoundaryVersion = "0.10.2"
 def grpcVersion = "1.60.1"
 
 dependencies {
     api "io.contract-testing.contractcase:case_example_mock_types:${caseCoreVersion}"
     api "io.contract-testing.contractcase:test-equivalence-matchers:${caseCoreVersion}"
-    implementation 'io.contract-testing.contractcase:case_boundary:0.6.3'
+    implementation "io.contract-testing.contractcase:case_boundary:${caseBoundaryVersion}"
     implementation 'com.diogonunes:JColor:5.5.1'
     implementation 'com.google.protobuf:protobuf-java:3.25.1'
     implementation 'com.google.protobuf:protobuf-java-util:3.25.1'

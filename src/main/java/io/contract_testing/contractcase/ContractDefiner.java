@@ -1,6 +1,6 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_example_mock_types.base.AnyMockDescriptor;
+import io.contract_testing.contractcase.case_example_mock_types.mocks.base.AnyMockDescriptor;
 import io.contract_testing.contractcase.client.InternalDefinerClient;
 import org.jetbrains.annotations.NotNull;
 
