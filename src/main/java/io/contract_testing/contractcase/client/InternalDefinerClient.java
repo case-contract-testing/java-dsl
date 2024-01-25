@@ -314,11 +314,13 @@ public class InternalDefinerClient {
         Status status = Status.fromThrowable(t);
         if (Status.Code.UNAVAILABLE.equals(status.getCode())) {
           System.err.println(
-              "ContractCase was unable to contact its internal server."
-                  + " This is either a conflict while starting the server,"
-                  + " or a bug in ContractCase. Please see the rest of the "
-                  + "log output. If it is a bug, please open an issue on "
-                  + "https://github.com/case-contract-testing/contract-case");
+              "ContractCase was unable to contact its internal server.\n"
+                  + "   This is either a conflict while starting the server,\n"
+                  + "   or a bug in ContractCase. Please see the rest of the\n"
+                  + "   log output for details.\n\n"
+                  + "   If you are unable to resolve this locally,\n"
+                  + "   please open an issue here:"
+                  + "   https://github.com/case-contract-testing/contract-case");
         } else {
           System.err.println("ContractCase failed: " + status);
         }
