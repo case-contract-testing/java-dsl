@@ -1,5 +1,6 @@
 package io.contract_testing.contractcase;
 
+import io.contract_testing.contractcase.IndividualFailedTestConfig.IndividualFailedTestConfigBuilder;
 import io.contract_testing.contractcase.case_example_mock_types.mocks.base.AnyMockDescriptor;
 import io.contract_testing.contractcase.client.InternalDefinerClient;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,11 @@ public class ContractDefiner {
     }
   }
 
+  public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition,
+      final @NotNull IndividualSuccessTestConfig.IndividualSuccessTestConfigBuilder<T> additionalConfig) {
+    this.runExample(definition, additionalConfig.build());
+  }
+
   public <M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition) {
     this.runExample(
         definition,
@@ -55,6 +61,10 @@ public class ContractDefiner {
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
     }
+  }
+  public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
+      IndividualFailedTestConfigBuilder<T> additionalConfig) {
+    this.runThrowingExample(definition,additionalConfig.build());
   }
 
   public <M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {
