@@ -13,22 +13,22 @@ class BoundaryExceptionMapper {
         Collectors.joining("\n"));
   }
 
-  static BoundaryFailure map(Exception e) {
+  static BoundaryFailure map(Throwable e) {
     return new BoundaryFailure(e.getClass().getName(), e.getMessage(), stackTraceToString(e));
   }
 
-  static BoundaryFailure mapAsTriggerFailure(Exception e) {
+  static BoundaryFailure mapAsTriggerFailure(Throwable e) {
     return new BoundaryFailure(BoundaryFailureKindConstants.CASE_TRIGGER_ERROR, "Trigger function failed: " + e.getMessage(),
         stackTraceToString(e));
   }
 
-  static BoundaryFailure mapAsVerifyFailure(Exception e) {
+  static BoundaryFailure mapAsVerifyFailure(Throwable e) {
     return new BoundaryFailure("Verification failed: " +  BoundaryFailureKindConstants.CASE_VERIFY_RETURN_ERROR,
         e.getMessage(),
         stackTraceToString(e));
   }
 
-  public static BoundaryResult mapAsStateFailure(Exception e) {
+  public static BoundaryResult mapAsStateFailure(Throwable e) {
     return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
         "State handler failed: " + e.getMessage(),
         stackTraceToString(e));

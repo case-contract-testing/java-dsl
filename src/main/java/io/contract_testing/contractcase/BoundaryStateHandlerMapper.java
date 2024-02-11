@@ -31,7 +31,7 @@ class BoundaryStateHandlerMapper {
             return new BoundarySuccess();
           }
           return new BoundarySuccessWithMap(config);
-        } catch (Exception e) {
+        } catch (Throwable e) {
           return BoundaryExceptionMapper.mapAsStateFailure(e);
         }
       }
@@ -42,7 +42,7 @@ class BoundaryStateHandlerMapper {
           handler.teardown();
 
           return new BoundarySuccess();
-        } catch (Exception e) {
+        } catch (Throwable e) {
           return BoundaryExceptionMapper.mapAsStateFailure(e);
         }
       }

@@ -13,13 +13,13 @@ class BoundaryTriggerMapper {
       T ret;
       try {
         ret = trigger.call(config);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         return BoundaryExceptionMapper.mapAsTriggerFailure(e);
       }
 
       try {
         testResponseFunction.call(ret);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         return BoundaryExceptionMapper.mapAsVerifyFailure(e);
       }
 
@@ -34,10 +34,10 @@ class BoundaryTriggerMapper {
         trigger.call(config);
         return BoundaryExceptionMapper.mapAsTriggerFailure(
             new RuntimeException("Expected the trigger to fail, but it did not"));
-      } catch (Exception triggerException) {
+      } catch (Throwable triggerException) {
         try {
           testErrorResponseFunction.call(triggerException);
-        } catch (Exception verifyException) {
+        } catch (Throwable verifyException) {
           return BoundaryExceptionMapper.mapAsVerifyFailure(verifyException);
         }
       }
