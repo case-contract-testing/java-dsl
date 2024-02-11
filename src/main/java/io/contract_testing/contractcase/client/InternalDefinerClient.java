@@ -6,6 +6,7 @@ import static io.contract_testing.contractcase.client.ConnectorIncomingMapper.ma
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResultResponse;
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResult;
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapRunExampleRequest;
+import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapRunRejectingExampleRequest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.contract_testing.contractcase.ContractCaseCoreError;
@@ -221,12 +222,15 @@ public class InternalDefinerClient {
   }
 
 
-  public @NotNull BoundaryResult runRejectingExample(@NotNull BoundaryMockDefinition definition,
+  public @NotNull BoundaryResult runRejectingExample(@NotNull JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
-    return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,
-        "runRejectingExample not implemented", // TODO
-        CONTRACT_CASE_JAVA_WRAPPER);
+    this.boundaryConfig = runConfig;
+    return executeCallAndWait(mapRunRejectingExampleRequest(
+        definition,
+        runConfig));
   }
+
+
 
   public @NotNull BoundaryResult stripMatchers(@NotNull AnyMatcher matcherOrData) {
     return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CORE_ERROR,

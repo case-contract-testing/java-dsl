@@ -14,6 +14,7 @@ import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
+import io.contract_testing.contractcase.case_boundary.BoundaryMockDefinition;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithAny;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
@@ -22,6 +23,7 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultFailure;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
@@ -130,6 +132,15 @@ class ConnectorOutgoingMapper {
   @NotNull
   static ContractCaseStream.DefinitionRequest.Builder mapRunExampleRequest(JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
+    final var structBuilder = getStructBuilder(definition);
+    return DefinitionRequest.newBuilder()
+        .setRunExample(RunExampleRequest.newBuilder()
+            .setConfig(ConnectorOutgoingMapper.mapConfig(runConfig)) // TODO handle additional state handlers or triggers
+            .setExampleDefinition(structBuilder)
+            .build());
+  }
+
+  static ContractCaseStream.DefinitionRequest.Builder mapRunRejectingExampleRequest(JsonNode definition, ContractCaseBoundaryConfig runConfig) {
     final var structBuilder = getStructBuilder(definition);
     return DefinitionRequest.newBuilder()
         .setRunExample(RunExampleRequest.newBuilder()

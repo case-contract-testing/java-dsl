@@ -53,6 +53,7 @@ class ConnectorIncomingMapper {
         .actual(ConnectorIncomingMapper.map(printMatchErrorRequest.getActual()))
         .errorTypeTag(ConnectorIncomingMapper.map(printMatchErrorRequest.getErrorTypeTag()))
         .location(ConnectorIncomingMapper.map(printMatchErrorRequest.getLocation()))
+        .locationTag(ConnectorIncomingMapper.map(printMatchErrorRequest.getLocationTag()))
         .message(ConnectorIncomingMapper.map(printMatchErrorRequest.getMessage()))
         .build();
   }

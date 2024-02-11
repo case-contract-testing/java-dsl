@@ -8,13 +8,15 @@ plugins {
 group 'io.contract-testing.contractcase'
 version "0.0.1" // x-release-please-version
 
+sourceCompatibility = '17'
+
 repositories {
     mavenCentral()
     mavenLocal()
 }
 
-def caseCoreVersion = "0.15.4"
-def caseBoundaryVersion = "0.10.2"
+def caseCoreVersion = "0.15.5"
+def caseBoundaryVersion = "0.10.3"
 def grpcVersion = "1.60.1"
 
 dependencies {

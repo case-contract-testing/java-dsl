@@ -56,15 +56,16 @@ public class ContractDefiner {
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
       IndividualFailedTestConfig<T> additionalConfig) {
     try {
-      BoundaryResultMapper.map(definer.runRejectingExample(BoundaryDefinitionMapper.map(definition),
+      BoundaryResultMapper.map(definer.runRejectingExample(definition.toJSON(),
           BoundaryConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)));
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
     }
   }
+
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
       IndividualFailedTestConfigBuilder<T> additionalConfig) {
-    this.runThrowingExample(definition,additionalConfig.build());
+    this.runThrowingExample(definition, additionalConfig.build());
   }
 
   public <M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition) {
