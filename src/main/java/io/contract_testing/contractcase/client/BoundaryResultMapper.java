@@ -10,7 +10,7 @@ import io.contract_testing.contractcase.case_boundary.BoundaryResultTypeConstant
 
 class BoundaryResultMapper {
 
-  public static void map(BoundaryResult result) {
+  static void map(BoundaryResult result) {
     final var resultType = result.getResultType();
 
     if (resultType.equals(BoundaryResultTypeConstants.RESULT_SUCCESS)) {
@@ -39,4 +39,6 @@ class BoundaryResultMapper {
         "Unhandled error kind (" + kind + "): " + result.getMessage(),
         result.getLocation());
   }
+
+
 }

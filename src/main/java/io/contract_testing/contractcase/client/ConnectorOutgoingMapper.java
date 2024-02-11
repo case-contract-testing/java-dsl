@@ -1,7 +1,6 @@
 package io.contract_testing.contractcase.client;
 
-import static io.contract_testing.contractcase.client.InternalDefinerClient.CONTRACT_CASE_JAVA_WRAPPER;
-import static io.contract_testing.contractcase.client.InternalDefinerClient.CONTRACT_CASE_TRIGGER_AND_TEST;
+import static io.contract_testing.contractcase.client.MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,7 +13,6 @@ import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.BoundaryMockDefinition;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithAny;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
@@ -23,7 +21,6 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultFailure;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
@@ -37,6 +34,8 @@ import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 
 class ConnectorOutgoingMapper {
+
+  public static final String CONTRACT_CASE_TRIGGER_AND_TEST = "ContractCase::TriggerAndTest";
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
