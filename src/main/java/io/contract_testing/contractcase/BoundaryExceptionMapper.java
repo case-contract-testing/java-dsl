@@ -18,19 +18,26 @@ class BoundaryExceptionMapper {
   }
 
   static BoundaryFailure mapAsTriggerFailure(Throwable e) {
-    return new BoundaryFailure(BoundaryFailureKindConstants.CASE_TRIGGER_ERROR, "Trigger function failed: " + e.getMessage(),
-        stackTraceToString(e));
+    return new BoundaryFailure(
+        BoundaryFailureKindConstants.CASE_TRIGGER_ERROR,
+        "Trigger function failed: " + e.getMessage(),
+        stackTraceToString(e)
+    );
   }
 
   static BoundaryFailure mapAsVerifyFailure(Throwable e) {
-    return new BoundaryFailure("Verification failed: " +  BoundaryFailureKindConstants.CASE_VERIFY_RETURN_ERROR,
-        e.getMessage(),
-        stackTraceToString(e));
+    return new BoundaryFailure(
+        BoundaryFailureKindConstants.CASE_VERIFY_RETURN_ERROR,
+        "Verification failed: " + e.getMessage(),
+        stackTraceToString(e)
+    );
   }
 
   public static BoundaryResult mapAsStateFailure(Throwable e) {
-    return new BoundaryFailure(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+    return new BoundaryFailure(
+        BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
         "State handler failed: " + e.getMessage(),
-        stackTraceToString(e));
+        stackTraceToString(e)
+    );
   }
 }
