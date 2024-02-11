@@ -2,7 +2,7 @@ package io.contract_testing.contractcase;
 
 import io.contract_testing.contractcase.case_boundary.BoundaryCrashMessage;
 
-public class BoundaryCrashReporter {
+class BoundaryCrashReporter {
 
   static void handleAndRethrow(Throwable e) {
     if (e instanceof ContractCaseConfigurationError) {
