@@ -15,8 +15,8 @@ repositories {
     mavenLocal()
 }
 
-def caseCoreVersion = "0.15.5"
-def caseBoundaryVersion = "0.10.3"
+def caseCoreVersion = "0.15.6"
+def caseBoundaryVersion = "0.11.0"
 def grpcVersion = "1.60.1"
 
 dependencies {
@@ -51,9 +51,7 @@ jar {
 
 sourceSets {
     main {
-        java {
-     //       srcDirs 'build/generated/source/proto/main/grpcjava', 'build/generated/source/proto/main/java'
-        }
+        java {}
     }
 }
 
