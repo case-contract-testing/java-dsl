@@ -28,7 +28,7 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream.BeginDefinitionR
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionResponse;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.EndDefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
@@ -242,7 +242,7 @@ public class InternalDefinerClient {
   private StreamObserver<DefinitionRequest> createConnection(ContractCaseStub asyncStub) {
     return asyncStub.contractDefinition(new StreamObserver<>() {
       @Override
-      public void onNext(DefinitionResponse note) {
+      public void onNext(ContractResponse note) {
         /* For when we receive messages from the server */
         final var requestId = ConnectorIncomingMapper.map(note.getId());
         switch (note.getKindCase()) {
@@ -308,6 +308,10 @@ public class InternalDefinerClient {
           }
           case KIND_NOT_SET -> {
             throw new ContractCaseCoreError("Received a message with no kind set",
+                "Java Internal Connector");
+          }
+          case START_TEST_EVENT -> {
+            throw new ContractCaseCoreError("Received start test event incorrectly during a define contract",
                 "Java Internal Connector");
           }
         }
