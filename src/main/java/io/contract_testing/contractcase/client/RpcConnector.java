@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
-public class RpcConnector {
+class RpcConnector {
 
   private static final int DEFAULT_PORT = 50200;
 
