@@ -4,6 +4,9 @@ import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.case_boundary.BoundaryResultTypeConstants;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * These copies exist because otherwise they can't be used as constants
+ */
 class ResultTypeConstantsCopy {
 
   /**
