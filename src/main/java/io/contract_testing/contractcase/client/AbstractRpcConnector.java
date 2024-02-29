@@ -1,16 +1,18 @@
 package io.contract_testing.contractcase.client;
 
+import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.GeneratedMessageV3.Builder;
+import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
 import io.contract_testing.contractcase.case_boundary.ILogPrinter;
 import io.contract_testing.contractcase.case_boundary.IResultPrinter;
+import io.contract_testing.contractcase.case_boundary.IRunTestCallback;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BoundaryResult;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
-import io.grpc.ManagedChannel;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -23,34 +25,49 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
-class RpcConnector {
+abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder<B>> {
 
   private static final int DEFAULT_PORT = 50200;
 
-  private final StreamObserver<DefinitionRequest> requestObserver;
+  private final StreamObserver<T> requestObserver;
   private final ConcurrentMap<String, CompletableFuture<BoundaryResult>> responseFutures = new ConcurrentHashMap<String, CompletableFuture<BoundaryResult>>();
   private final AtomicInteger nextId = new AtomicInteger();
-
   private Status errorStatus;
 
 
-  public RpcConnector(@NotNull ILogPrinter logPrinter, @NotNull IResultPrinter resultPrinter,
-      ConfigHandle configHandle) {
-    // TODO: Allow configuration of the port
-    ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", DEFAULT_PORT)
-        .usePlaintext()
-        .build();
-    ContractCaseStub asyncStub = ContractCaseGrpc.newStub(channel);
-    requestObserver = createConnection(asyncStub,new ContractResponseStreamObserver(this, logPrinter, resultPrinter, configHandle));
+  public AbstractRpcConnector(
+      @NotNull ILogPrinter logPrinter,
+      @NotNull IResultPrinter resultPrinter,
+      @NotNull ConfigHandle configHandle,
+      @NotNull IRunTestCallback runTestCallback) {
+    this.requestObserver = createConnection(
+        ContractCaseGrpc.newStub(
+            ManagedChannelBuilder
+                // TODO: Allow configuration of the port
+                .forAddress("localhost", DEFAULT_PORT)
+                .usePlaintext()
+                .build()),
+        new ContractResponseStreamObserver<>(
+            this,
+            logPrinter,
+            resultPrinter,
+            configHandle,
+            runTestCallback
+        )
+    );
   }
 
-  private StreamObserver<DefinitionRequest> createConnection(ContractCaseStub asyncStub,
-      ContractResponseStreamObserver contractResponseStreamObserver) {
-    return asyncStub.contractDefinition(contractResponseStreamObserver);
-  }
+  abstract StreamObserver<T> createConnection(ContractCaseStub asyncStub,
+      ContractResponseStreamObserver<T, B> contractResponseStreamObserver);
 
-  io.contract_testing.contractcase.case_boundary.BoundaryResult executeCallAndWait(Builder builder) {
-    var id = "" + nextId.getAndIncrement();
+  abstract T setId(B builder, StringValue id);
+
+  abstract B makeResponse(ResultResponse response);
+
+  abstract B makeInvokeTest(StringValue invokerId);
+
+  io.contract_testing.contractcase.case_boundary.BoundaryResult executeCallAndWait(B builder) {
+    final var id = "" + nextId.getAndIncrement();
     if (errorStatus != null) {
       return new BoundaryFailure(
           BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
@@ -61,7 +78,7 @@ class RpcConnector {
 
     var future = new CompletableFuture<BoundaryResult>();
     responseFutures.put(id, future);
-    requestObserver.onNext(builder.setId(ConnectorOutgoingMapper.map(id)).build());
+    requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
 
     try {
       return ConnectorIncomingMapper.mapBoundaryResult(future.get(60, TimeUnit.SECONDS));
@@ -97,7 +114,7 @@ class RpcConnector {
   void completeWait(String id, BoundaryResult result) {
     MaintainerLog.log("Completing wait for: " + id);
 
-    var future = responseFutures.get(id);
+    final var future = responseFutures.get(id);
     if (future == null) {
       throw new ContractCaseCoreError(
           "There was no future with id '" + id + "'. This is a bug in the wrapper or the boundary.",
@@ -107,8 +124,12 @@ class RpcConnector {
     responseFutures.get(id).complete(result);
   }
 
-  void sendResponse(DefinitionRequest.Builder builder, String id) {
-    requestObserver.onNext(builder.setId(ConnectorOutgoingMapper.map(id)).build());
+  void sendResponse(B builder, String id) {
+    requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
+  }
+
+  void sendResponse(ResultResponse response, String id) {
+    sendResponse(makeResponse(response), id);
   }
 
   public void setErrorStatus(Status errorStatus) {
@@ -118,4 +139,6 @@ class RpcConnector {
   public void close() {
     requestObserver.onCompleted();
   }
+
+
 }

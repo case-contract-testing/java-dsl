@@ -1,22 +1,23 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_boundary.BoundaryContractVerifier;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundarySuccess;
 import io.contract_testing.contractcase.case_boundary.IInvokeCoreTest;
 import io.contract_testing.contractcase.case_boundary.IRunTestCallback;
+import io.contract_testing.contractcase.client.InternalVerifierClient;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 public class ContractVerifier {
 
-  private final BoundaryContractVerifier verifier;
+  private final InternalVerifierClient verifier;
 
   public ContractVerifier(ContractCaseConfig config) {
     LogPrinter logPrinter = new LogPrinter();
 
-    BoundaryContractVerifier verification = null;
+    InternalVerifierClient verification = null;
     try {
-      verification = new BoundaryContractVerifier(
+      verification = new InternalVerifierClient(
           BoundaryConfigMapper.map(config, "VERIFICATION"),
           new IRunTestCallback() {
             @Override
@@ -25,7 +26,7 @@ public class ContractVerifier {
               // TODO replace this with something that knows about JUnit
               try {
                 try {
-                  BoundaryResultMapper.map(invoker.verify());
+                  BoundaryResultMapper.mapVoid(invoker.verify());
                 } catch (Exception e) {
                   System.err.println(e);
                 }
@@ -35,11 +36,22 @@ public class ContractVerifier {
               }
             }
 
-          }, logPrinter, logPrinter, new BoundaryVersionGenerator().getVersions());
+          }, logPrinter, logPrinter, new BoundaryVersionGenerator().getVersions()
+      );
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
     }
     this.verifier = verification;
+  }
+
+  public List<ContractDescription> availableContractDescriptions() {
+    try {
+      return BoundaryResultMapper.mapListAvailableContracts(this.verifier.availableContractDescriptions());
+    } catch (Throwable e) {
+      BoundaryCrashReporter.handleAndRethrow(e);
+      // This is actually unreachable, since the above method always throws
+      return List.of();
+    }
   }
 
   public void runVerification(ContractCaseConfig configOverrides) {

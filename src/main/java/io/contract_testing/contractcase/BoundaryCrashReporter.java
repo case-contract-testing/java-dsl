@@ -5,6 +5,7 @@ import io.contract_testing.contractcase.case_boundary.BoundaryCrashMessage;
 class BoundaryCrashReporter {
 
   static void handleAndRethrow(Throwable e) {
+    // This method should not call BoundaryResultMapper
     if (e instanceof ContractCaseConfigurationError) {
       throw (ContractCaseConfigurationError) e;
     } else if (e instanceof ContractCaseExpectationsNotMet) {
@@ -26,7 +27,8 @@ class BoundaryCrashReporter {
               + e.toString()
               + "\n"
               + BoundaryExceptionMapper.stackTraceToString(e)
-              + (e.getCause() != null ? "Caused by: " + e.getCause().toString() + "\n" + BoundaryExceptionMapper.stackTraceToString(e.getCause()) : "")
+              + (e.getCause() != null ? "Caused by: " + e.getCause().toString() + "\n"
+              + BoundaryExceptionMapper.stackTraceToString(e.getCause()) : "")
               + "\n\n"
               + BoundaryCrashMessage.CRASH_MESSAGE_END);
     }

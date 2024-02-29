@@ -22,7 +22,7 @@ public class InternalDefinerClient {
 
   private final List<String> parentVersions;
 
-  private final RpcConnector rpcConnector;
+  private final RpcForDefinition rpcConnector;
 
   private final ConfigHandle configHandle;
 
@@ -35,20 +35,11 @@ public class InternalDefinerClient {
 
     this.parentVersions = parentVersions;
     this.configHandle = new ConfigHandle(boundaryConfig);
-    this.rpcConnector = new RpcConnector(logPrinter, resultPrinter, configHandle);
+    this.rpcConnector = new RpcForDefinition(logPrinter, resultPrinter, configHandle);
 
-    // TODO: Replace this with something that is less generic - it's the only use
-    BoundaryResultMapper.map(begin(ConnectorOutgoingMapper.mapConfig(boundaryConfig)));
-  }
-
-  private BoundaryResult begin(ContractCaseConfig wireConfig) {
-    return rpcConnector.executeCallAndWait(DefinitionRequest.newBuilder()
-        .setBeginDefinition(BeginDefinitionRequest.newBuilder()
-            .addAllCallerVersions(parentVersions.stream()
-                .map(ConnectorOutgoingMapper::map)
-                .toList())
-            .setConfig(wireConfig)
-            .build()));
+    // this is only here because we have to be able to map errors into exceptions
+    // probably we should call begin outside the constructor to avoid this issue
+    RpcBoundaryResultMapper.map(begin(ConnectorOutgoingMapper.mapConfig(boundaryConfig)));
   }
 
   public @NotNull BoundaryResult endRecord() {
@@ -59,8 +50,8 @@ public class InternalDefinerClient {
     return result;
   }
 
-  public @NotNull BoundaryResult runExample(JsonNode definition,
-      @NotNull ContractCaseBoundaryConfig runConfig) {
+  public @NotNull BoundaryResult runExample(final @NotNull JsonNode definition,
+      final @NotNull ContractCaseBoundaryConfig runConfig) {
     configHandle.setBoundaryConfig(runConfig);
     return rpcConnector.executeCallAndWait(mapRunExampleRequest(
         definition,
@@ -68,7 +59,7 @@ public class InternalDefinerClient {
     ));
   }
 
-  public @NotNull BoundaryResult runRejectingExample(@NotNull JsonNode definition,
+  public @NotNull BoundaryResult runRejectingExample(final @NotNull JsonNode definition,
       @NotNull ContractCaseBoundaryConfig runConfig) {
     configHandle.setBoundaryConfig(runConfig);
     return rpcConnector.executeCallAndWait(mapRunRejectingExampleRequest(
@@ -77,7 +68,8 @@ public class InternalDefinerClient {
     ));
   }
 
-  public @NotNull BoundaryResult stripMatchers(@NotNull AnyMatcher matcherOrData) {
+  public @NotNull BoundaryResult stripMatchers(final @NotNull AnyMatcher matcherOrData) {
+    // TODO: Implement this
     return new BoundaryFailure(
         BoundaryFailureKindConstants.CASE_CORE_ERROR,
         "stripMatchers not implemented", // TODO
@@ -85,5 +77,14 @@ public class InternalDefinerClient {
     );
   }
 
+  private BoundaryResult begin(final ContractCaseConfig wireConfig) {
+    return rpcConnector.executeCallAndWait(DefinitionRequest.newBuilder()
+        .setBeginDefinition(BeginDefinitionRequest.newBuilder()
+            .addAllCallerVersions(parentVersions.stream()
+                .map(ConnectorOutgoingMapper::map)
+                .toList())
+            .setConfig(wireConfig)
+            .build()));
+  }
 
 }

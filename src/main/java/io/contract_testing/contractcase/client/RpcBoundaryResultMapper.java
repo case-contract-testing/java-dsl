@@ -8,7 +8,9 @@ import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstan
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundaryResultTypeConstants;
 
-class BoundaryResultMapper {
+class RpcBoundaryResultMapper {
+  // Todo: Replace this class with the BoundaryResultMapper at the top level
+  // Without exposing it to users
 
   static void map(BoundaryResult result) {
     final var resultType = result.getResultType();
@@ -37,7 +39,8 @@ class BoundaryResultMapper {
 
     throw new ContractCaseCoreError(
         "Unhandled error kind (" + kind + "): " + result.getMessage(),
-        result.getLocation());
+        result.getLocation()
+    );
   }
 
 

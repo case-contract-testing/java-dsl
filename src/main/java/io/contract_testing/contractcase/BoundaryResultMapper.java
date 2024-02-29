@@ -4,10 +4,12 @@ import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.BoundaryResultTypeConstants;
+import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithAny;
+import java.util.List;
 
 class BoundaryResultMapper {
 
-  public static void map(BoundaryResult result) {
+  static void mapVoid(BoundaryResult result) {
     final var resultType = result.getResultType();
 
     if (resultType.equals(BoundaryResultTypeConstants.RESULT_SUCCESS)) {
@@ -16,10 +18,15 @@ class BoundaryResultMapper {
     if (resultType.equals(BoundaryResultTypeConstants.RESULT_FAILURE)) {
       mapFailure((BoundaryFailure) result);
     }
+
+    throw new ContractCaseCoreError(
+        "Unexpected non-void BoundaryResult typa '" + resultType + "'",
+        "BoundaryResultMapper.mapVoid"
+    );
   }
 
   private static void mapFailure(BoundaryFailure result) {
-    String kind = result.getKind();
+    final var kind = result.getKind();
 
     if (kind.equals(BoundaryFailureKindConstants.CASE_BROKER_ERROR)
         || kind.equals(BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR)
@@ -34,6 +41,24 @@ class BoundaryResultMapper {
 
     throw new ContractCaseCoreError(
         "Unhandled error kind (" + kind + "): " + result.getMessage(),
-        result.getLocation());
+        result.getLocation()
+    );
+  }
+
+  public static List<ContractDescription> mapListAvailableContracts(BoundaryResult result) {
+    final var resultType = result.getResultType();
+    if (resultType.equals(BoundaryResultTypeConstants.RESULT_SUCCESS_HAS_ANY_PAYLOAD)) {
+      // TODO implement this
+      System.out.println(((BoundarySuccessWithAny) result).getPayload());
+      throw new ContractCaseCoreError("The parsing of this object hasn't yet been implemented"
+          + ((BoundarySuccessWithAny) result).getPayload());
+    }
+    if (resultType.equals(BoundaryResultTypeConstants.RESULT_FAILURE)) {
+      mapFailure((BoundaryFailure) result);
+    }
+    throw new ContractCaseCoreError(
+        "Unexpected non-void BoundaryResult typa '" + resultType + "'",
+        "BoundaryResultMapper.mapListAvailableContracts"
+    );
   }
 }

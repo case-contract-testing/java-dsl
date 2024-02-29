@@ -72,10 +72,12 @@ class ConnectorOutgoingMapper {
     }
     if (config.getTriggerAndTests() != null) {
       config.getTriggerAndTests()
-          .forEach((key, value) -> builder.putTriggerAndTests(key,
+          .forEach((key, value) -> builder.putTriggerAndTests(
+              key,
               TriggerFunctionHandle.newBuilder()
                   .setHandle(ConnectorOutgoingMapper.map(key))
-                  .build()));
+                  .build()
+          ));
     }
     if (config.getTriggerAndTest() != null) {
       builder.setTriggerAndTest(TriggerFunctionHandle.newBuilder()
@@ -139,7 +141,8 @@ class ConnectorOutgoingMapper {
             .build());
   }
 
-  static ContractCaseStream.DefinitionRequest.Builder mapRunRejectingExampleRequest(JsonNode definition, ContractCaseBoundaryConfig runConfig) {
+  static ContractCaseStream.DefinitionRequest.Builder mapRunRejectingExampleRequest(JsonNode definition,
+      ContractCaseBoundaryConfig runConfig) {
     final var structBuilder = getStructBuilder(definition);
     return DefinitionRequest.newBuilder()
         .setRunExample(RunExampleRequest.newBuilder()
@@ -188,11 +191,9 @@ class ConnectorOutgoingMapper {
     };
   }
 
-  @NotNull
-  static ContractCaseStream.DefinitionRequest.Builder mapResultResponse(BoundaryResult result) {
-    return DefinitionRequest.newBuilder()
-        .setResultResponse(ResultResponse.newBuilder()
-            .setResult(mapResult(result)));
+  static ResultResponse mapResultResponse(BoundaryResult result) {
+    return ResultResponse.newBuilder()
+        .setResult(mapResult(result)).build();
   }
 
   private static Value mapMapToValue(Object payload) {
