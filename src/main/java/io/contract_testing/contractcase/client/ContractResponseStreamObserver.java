@@ -9,13 +9,14 @@ import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.ma
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.GeneratedMessageV3.Builder;
 import io.contract_testing.contractcase.ContractCaseCoreError;
+import io.contract_testing.contractcase.case_boundary.BoundaryResult;
+import io.contract_testing.contractcase.case_boundary.BoundaryStateHandler;
 import io.contract_testing.contractcase.case_boundary.ILogPrinter;
 import io.contract_testing.contractcase.case_boundary.IResultPrinter;
 import io.contract_testing.contractcase.case_boundary.IRunTestCallback;
-import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
-import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultSuccess;
+import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHandle.Stage;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.jetbrains.annotations.NotNull;
@@ -50,13 +51,20 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
     switch (note.getKindCase()) {
       case RUN_STATE_HANDLER -> {
         final var stateHandlerRunRequest = note.getRunStateHandler();
-        // TODO Implement this properly
+        var stateName = stateHandlerRunRequest.getStateHandlerHandle()
+            .getHandle()
+            .getValue();
+        var handle = configHandle.getStateHandler(
+            stateName);
+
         rpcConnector.sendResponse(
             ResultResponse.newBuilder()
-                .setResult(ContractCaseStream.BoundaryResult.newBuilder()
-                    .setSuccess(ResultSuccess.newBuilder().build())
-                    .build()
-                ).build(),
+                .setResult(mapResult(runStateHandler(
+                    stateHandlerRunRequest.getStateHandlerHandle()
+                        .getStage(),
+                    stateName,
+                    handle
+                ))).build(),
             requestId
         );
       }
@@ -135,7 +143,6 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
       }
       case START_TEST_EVENT -> {
         var startTestEvent = note.getStartTestEvent();
-
         rpcConnector.sendResponse(
             mapResultResponse(
                 runTestCallback.runTest(
@@ -184,5 +191,18 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
 
   @Override
   public void onCompleted() {
+  }
+
+  @NotNull
+  private static BoundaryResult runStateHandler(Stage stage,
+      String stateName,
+      BoundaryStateHandler handle) {
+    return switch (stage) {
+      case STAGE_SETUP_UNSPECIFIED -> handle.setup();
+      case STAGE_TEARDOWN -> handle.teardown();
+      case UNRECOGNIZED -> throw new ContractCaseCoreError(
+          "Unrecognised state handler stage while trying to run '" + stateName +
+              "'");
+    };
   }
 }
