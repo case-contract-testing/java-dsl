@@ -86,11 +86,15 @@ class ConnectorOutgoingMapper {
     }
 
     if (config.getStateHandlers() != null) {
-      // TODO: TEARDOWN FUNCTION
       config.getStateHandlers().forEach((key, value) -> {
         builder.addStateHandlers(StateHandlerHandle.newBuilder()
             .setHandle(ConnectorOutgoingMapper.map(key))
             .setStage(Stage.STAGE_SETUP_UNSPECIFIED)
+            .build());
+
+        builder.addStateHandlers(StateHandlerHandle.newBuilder()
+            .setHandle(ConnectorOutgoingMapper.map(key))
+            .setStage(Stage.STAGE_TEARDOWN)
             .build());
       });
     }
