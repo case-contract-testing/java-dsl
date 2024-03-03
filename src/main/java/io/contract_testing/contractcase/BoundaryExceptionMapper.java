@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 class BoundaryExceptionMapper {
 
-  public static String stackTraceToString(Throwable e) {
+  static String stackTraceToString(Throwable e) {
     return Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).collect(
         Collectors.joining("\n"));
   }
@@ -33,7 +33,7 @@ class BoundaryExceptionMapper {
     );
   }
 
-  public static BoundaryResult mapAsStateFailure(Throwable e) {
+  static BoundaryResult mapAsStateFailure(Throwable e) {
     return new BoundaryFailure(
         BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
         "State handler failed: " + e.getMessage(),
