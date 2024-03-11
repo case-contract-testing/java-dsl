@@ -81,8 +81,10 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
     requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
 
     try {
+      MaintainerLog.log("Waiting for: " + id);
       return ConnectorIncomingMapper.mapBoundaryResult(future.get(60, TimeUnit.SECONDS));
     } catch (TimeoutException e) {
+      MaintainerLog.log("Timed out waiting for: " + id);
       if (errorStatus != null) {
         return new BoundaryFailure(
             BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
@@ -97,6 +99,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     } catch (ExecutionException e) {
+      MaintainerLog.log("Execution exception waiting for: " + id + "\n" + e);
       return new BoundaryFailure(
           BoundaryFailureKindConstants.CASE_CORE_ERROR,
           "Failed waiting for a response '" + id + "':" + e.getMessage(),
@@ -112,7 +115,8 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
   }
 
   void completeWait(String id, BoundaryResult result) {
-    MaintainerLog.log("Completing wait for: " + id);
+    MaintainerLog.log(
+        "Completing wait for id '" + id + "', with result: " + result.getValueCase().name());
 
     final var future = responseFutures.get(id);
     if (future == null) {
@@ -125,6 +129,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
   }
 
   void sendResponse(B builder, String id) {
+    MaintainerLog.log("Sending (" + id + ") " + builder);
     requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
   }
 

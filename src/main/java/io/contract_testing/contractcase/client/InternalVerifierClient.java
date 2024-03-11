@@ -24,7 +24,7 @@ public class InternalVerifierClient {
       @NotNull ILogPrinter logPrinter,
       @NotNull IResultPrinter resultPrinter,
       @NotNull List<String> parentVersions) {
-    
+
     ResultTypeConstantsCopy.validate();
     this.parentVersions = parentVersions;
     this.rpcConnector = new RpcForVerification(
@@ -45,16 +45,21 @@ public class InternalVerifierClient {
   }
 
   public @NotNull BoundaryResult runVerification(@NotNull ContractCaseBoundaryConfig configOverrides) {
-    return rpcConnector.executeCallAndWait(VerificationRequest.newBuilder().setRunVerification(
+    MaintainerLog.log("Verification run");
+    var response = rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
+        .setRunVerification(
             RunVerification.newBuilder()
                 .setConfig(
                     ConnectorOutgoingMapper.mapConfig(configOverrides)
                 )
         )
     );
+    MaintainerLog.log("Response from verification was: " + response.getResultType());
+    return response;
   }
 
   private BoundaryResult begin(ContractCaseConfig wireConfig) {
+    MaintainerLog.log("Beginning verification setup");
     return rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
         .setBeginVerification(BeginVerificationRequest.newBuilder()
             .addAllCallerVersions(

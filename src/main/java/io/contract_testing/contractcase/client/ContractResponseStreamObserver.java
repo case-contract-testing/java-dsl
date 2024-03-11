@@ -19,6 +19,8 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.StateHandlerHandle.Stage;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.jetbrains.annotations.NotNull;
 
 class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builder<B>> implements
@@ -29,6 +31,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
   private final IResultPrinter resultPrinter;
   private final ConfigHandle configHandle;
   private final IRunTestCallback runTestCallback;
+  private final ExecutorService executor;
 
 
   public ContractResponseStreamObserver(
@@ -42,15 +45,17 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
     this.resultPrinter = resultPrinter;
     this.configHandle = configHandle;
     this.runTestCallback = runTestCallback;
+    this.executor = Executors.newCachedThreadPool();
   }
 
   @Override
-  public void onNext(final ContractResponse note) {
+  public void onNext(final ContractResponse coreResponse) {
     /* For when we receive messages from the server */
-    final var requestId = ConnectorIncomingMapper.map(note.getId());
-    switch (note.getKindCase()) {
+    final var requestId = ConnectorIncomingMapper.map(coreResponse.getId());
+    MaintainerLog.log("Received id(" + requestId + "), which was: " + coreResponse);
+    switch (coreResponse.getKindCase()) {
       case RUN_STATE_HANDLER -> {
-        final var stateHandlerRunRequest = note.getRunStateHandler();
+        final var stateHandlerRunRequest = coreResponse.getRunStateHandler();
         var stateName = stateHandlerRunRequest.getStateHandlerHandle()
             .getHandle()
             .getValue();
@@ -69,7 +74,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
         );
       }
       case LOG_REQUEST -> {
-        final var logRequest = note.getLogRequest();
+        final var logRequest = coreResponse.getLogRequest();
         rpcConnector.sendResponse(
             ResultResponse.newBuilder().setResult(
                 mapResult(
@@ -88,7 +93,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
         );
       }
       case PRINT_MATCH_ERROR_REQUEST -> {
-        final var printMatchErrorRequest = note.getPrintMatchErrorRequest();
+        final var printMatchErrorRequest = coreResponse.getPrintMatchErrorRequest();
         rpcConnector.sendResponse(
             mapResultResponse(
                 resultPrinter.printMatchError(
@@ -103,7 +108,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
             mapResultResponse(
                 resultPrinter.printMessageError(
                     mapMessageErrorRequest(
-                        note.getPrintMessageErrorRequest()
+                        coreResponse.getPrintMessageErrorRequest()
                     )
                 )
             ),
@@ -111,12 +116,12 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
         );
       }
       case PRINT_TEST_TITLE_REQUEST -> {
-        final var printTestTitleRequest = note.getPrintTestTitleRequest();
+        final var printTestTitleRequest = coreResponse.getPrintTestTitleRequest();
         rpcConnector.sendResponse(mapResultResponse(resultPrinter.printTestTitle(
             mapPrintableTestTitle(printTestTitleRequest))), requestId);
       }
       case TRIGGER_FUNCTION_REQUEST -> {
-        var triggerFunctionRequest = note.getTriggerFunctionRequest();
+        var triggerFunctionRequest = coreResponse.getTriggerFunctionRequest();
         var handle = ConnectorIncomingMapper.map(triggerFunctionRequest.getTriggerFunction()
             .getHandle());
         if (handle == null) {
@@ -139,11 +144,11 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
         );
       }
       case RESULT_RESPONSE -> {
-        rpcConnector.completeWait(requestId, note.getResultResponse().getResult());
+        rpcConnector.completeWait(requestId, coreResponse.getResultResponse().getResult());
       }
       case START_TEST_EVENT -> {
-        var startTestEvent = note.getStartTestEvent();
-        rpcConnector.sendResponse(
+        var startTestEvent = coreResponse.getStartTestEvent();
+        executor.submit(() -> rpcConnector.sendResponse(
             mapResultResponse(
                 runTestCallback.runTest(
                     startTestEvent.getTestName().getValue(),
@@ -151,12 +156,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
                         startTestEvent.getInvokerId()))
                 )),
             requestId
-        );
-        // TODO: Implement this
-        throw new ContractCaseCoreError(
-            "Received start test event incorrectly during a define contract",
-            "Java Internal Connector"
-        );
+        ));
       }
       case KIND_NOT_SET -> {
         throw new ContractCaseCoreError(
@@ -191,6 +191,8 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
 
   @Override
   public void onCompleted() {
+    MaintainerLog.log("Closing listener and pool");
+    executor.shutdown();
   }
 
   @NotNull
