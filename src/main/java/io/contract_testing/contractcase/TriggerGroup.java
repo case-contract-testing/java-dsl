@@ -17,7 +17,7 @@ public class TriggerGroup<T> {
   }
 
 
-  private TriggerGroup(
+  public TriggerGroup(
       final @NotNull String name,
       final @NotNull Trigger<T> trigger,
       final @NotNull Map<String, TestResponseFunction<T>> testResponses,
@@ -36,8 +36,10 @@ public class TriggerGroup<T> {
     });
 
     testErrorResponses.forEach((key, testErrorResponseFunction) -> {
-      ret.put(this.name + "::" + key,
-          BoundaryTriggerMapper.map(trigger, testErrorResponseFunction));
+      ret.put(
+          this.name + "::" + key,
+          BoundaryTriggerMapper.map(trigger, testErrorResponseFunction)
+      );
     });
 
     return ret;

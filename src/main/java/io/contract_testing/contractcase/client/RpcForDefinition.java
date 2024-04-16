@@ -2,10 +2,9 @@ package io.contract_testing.contractcase.client;
 
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
+import io.contract_testing.contractcase.LogPrinter;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.ILogPrinter;
-import io.contract_testing.contractcase.case_boundary.IResultPrinter;
+import io.contract_testing.contractcase.edge.ConnectorFailure;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
@@ -15,14 +14,12 @@ import org.jetbrains.annotations.NotNull;
 
 class RpcForDefinition extends AbstractRpcConnector<DefinitionRequest, Builder> {
 
-  public RpcForDefinition(@NotNull ILogPrinter logPrinter,
-      @NotNull IResultPrinter resultPrinter,
+  public RpcForDefinition(@NotNull LogPrinter logPrinter,
       ConfigHandle configHandle) {
     super(
         logPrinter,
-        resultPrinter,
         configHandle,
-        (testName, invoker) -> new BoundaryFailure(
+        (testName, invoker) -> new ConnectorFailure(
             BoundaryFailureKindConstants.CASE_CORE_ERROR,
             "runTest isn't valid during contract definition",
             MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER

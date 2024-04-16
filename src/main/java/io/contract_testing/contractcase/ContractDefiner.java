@@ -18,7 +18,6 @@ public class ContractDefiner {
       definer = new InternalDefinerClient(
           BoundaryConfigMapper.map(config, TEST_RUN_ID),
           logPrinter,
-          logPrinter,
           new BoundaryVersionGenerator().getVersions()
       );
     } catch (Throwable e) {

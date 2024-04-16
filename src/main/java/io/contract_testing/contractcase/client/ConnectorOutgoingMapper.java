@@ -11,12 +11,14 @@ import com.google.protobuf.StringValue;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
+import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.BoundaryResult;
-import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithAny;
-import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
+import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorResult;
+import io.contract_testing.contractcase.edge.ConnectorResultTypeConstants;
+import io.contract_testing.contractcase.edge.ConnectorSuccessWithAny;
+import io.contract_testing.contractcase.edge.ConnectorSuccessWithMap;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
@@ -157,13 +159,24 @@ class ConnectorOutgoingMapper {
 
 
   @NotNull
-  static ContractCaseStream.BoundaryResult mapResult(@NotNull BoundaryResult result) {
-    return switch (result.getResultType()) {
-      case ResultTypeConstantsCopy.RESULT_SUCCESS -> ContractCaseStream.BoundaryResult.newBuilder()
-          .setSuccess(ResultSuccess.newBuilder().build())
-          .build();
-      case ResultTypeConstantsCopy.RESULT_FAILURE -> {
-        var failure = ((BoundaryFailure) result);
+  static ContractCaseStream.BoundaryResult mapResult(@NotNull ConnectorResult result) {
+    var resultType = result.getResultType();
+    MaintainerLog.log("Mapping result type: " + resultType);
+    if (resultType == null) {
+      try {
+        throw new ContractCaseCoreError("" + result);
+      } catch (Throwable e) {
+        MaintainerLog.log("Null was at: ");
+        e.printStackTrace();
+      }
+    }
+    return switch (resultType) {
+      case ConnectorResultTypeConstants.RESULT_SUCCESS ->
+          ContractCaseStream.BoundaryResult.newBuilder()
+              .setSuccess(ResultSuccess.newBuilder().build())
+              .build();
+      case ConnectorResultTypeConstants.RESULT_FAILURE -> {
+        var failure = ((ConnectorFailure) result);
         yield ContractCaseStream.BoundaryResult.newBuilder()
             .setFailure(ResultFailure.newBuilder()
                 .setKind(ConnectorOutgoingMapper.map(failure.getKind()))
@@ -172,30 +185,33 @@ class ConnectorOutgoingMapper {
                 .build())
             .build();
       }
-      case ResultTypeConstantsCopy.RESULT_SUCCESS_HAS_MAP_PAYLOAD ->
+      case ConnectorResultTypeConstants.RESULT_SUCCESS_HAS_MAP_PAYLOAD ->
           ContractCaseStream.BoundaryResult.newBuilder()
               .setSuccessHasMap(ResultSuccessHasMapPayload.newBuilder()
-                  .setMap(mapMapToStruct(((BoundarySuccessWithMap) result).getPayload()))
+                  .setMap(mapMapToStruct(((ConnectorSuccessWithMap) result).getPayload()))
                   .build())
               .build();
-      case ResultTypeConstantsCopy.RESULT_SUCCESS_HAS_ANY_PAYLOAD ->
+      case ConnectorResultTypeConstants.RESULT_SUCCESS_HAS_ANY_PAYLOAD ->
           ContractCaseStream.BoundaryResult.newBuilder()
               .setSuccessHasAny(ResultSuccessHasAnyPayload.newBuilder()
-                  .setPayload(mapMapToValue(((BoundarySuccessWithAny) result).getPayload()))
+                  .setPayload(mapMapToValue(((ConnectorSuccessWithAny) result).getPayload()))
                   .build())
               .build();
-      default -> ContractCaseStream.BoundaryResult.newBuilder()
-          .setFailure(ResultFailure.newBuilder()
-              .setKind(ConnectorOutgoingMapper.map(BoundaryFailureKindConstants.CASE_CORE_ERROR))
-              .setLocation(ConnectorOutgoingMapper.map(CONTRACT_CASE_JAVA_WRAPPER))
-              .setMessage(ConnectorOutgoingMapper.map(
-                  "Tried to map an unknown result type: " + result.getResultType()))
-              .build())
-          .build();
+      default -> {
+        yield ContractCaseStream.BoundaryResult.newBuilder()
+            .setFailure(ResultFailure.newBuilder()
+                .setKind(ConnectorOutgoingMapper.map(BoundaryFailureKindConstants.CASE_CORE_ERROR))
+                .setLocation(ConnectorOutgoingMapper.map(CONTRACT_CASE_JAVA_WRAPPER))
+                .setMessage(ConnectorOutgoingMapper.map(
+                    "Tried to map an unknown result type: '" + resultType
+                ))
+                .build())
+            .build();
+      }
     };
   }
 
-  static ResultResponse mapResultResponse(BoundaryResult result) {
+  static ResultResponse mapResultResponse(ConnectorResult result) {
     return ResultResponse.newBuilder()
         .setResult(mapResult(result)).build();
   }

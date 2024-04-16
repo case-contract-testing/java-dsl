@@ -10,9 +10,10 @@ public class TriggerGroups {
   private final Map<String, TriggerGroup<?>> triggerGroups = new HashMap<>();
 
 
-  public <T> void addTriggerGroup(
+  public <T> TriggerGroups addTriggerGroup(
       final @NotNull TriggerGroup<T> triggerGroup) {
     triggerGroups.put(triggerGroup.getName(), triggerGroup);
+    return this;
   }
 
   Map<String, ITriggerFunction> toMap() {

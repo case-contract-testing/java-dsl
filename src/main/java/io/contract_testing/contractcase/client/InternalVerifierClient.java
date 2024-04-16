@@ -1,10 +1,11 @@
 package io.contract_testing.contractcase.client;
 
+import io.contract_testing.contractcase.LogPrinter;
 import io.contract_testing.contractcase.case_boundary.BoundaryResult;
 import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
-import io.contract_testing.contractcase.case_boundary.ILogPrinter;
-import io.contract_testing.contractcase.case_boundary.IResultPrinter;
-import io.contract_testing.contractcase.case_boundary.IRunTestCallback;
+import io.contract_testing.contractcase.edge.ConnectorResult;
+import io.contract_testing.contractcase.edge.ConnectorResultTypeConstants;
+import io.contract_testing.contractcase.edge.RunTestCallback;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.AvailableContractDefinitions;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BeginVerificationRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
@@ -17,20 +18,22 @@ public class InternalVerifierClient {
 
   private final List<String> parentVersions;
   private final RpcForVerification rpcConnector;
+  private final ConfigHandle configHandle;
+
+  private static final int VERIFY_TIMEOUT_SECONDS = 60 * 30;
 
   public InternalVerifierClient(
       @NotNull ContractCaseBoundaryConfig boundaryConfig,
-      @NotNull IRunTestCallback callback,
-      @NotNull ILogPrinter logPrinter,
-      @NotNull IResultPrinter resultPrinter,
+      @NotNull RunTestCallback callback,
+      @NotNull LogPrinter logPrinter,
       @NotNull List<String> parentVersions) {
 
-    ResultTypeConstantsCopy.validate();
+    ConnectorResultTypeConstants.validate();
     this.parentVersions = parentVersions;
+    this.configHandle = new ConfigHandle(boundaryConfig);
     this.rpcConnector = new RpcForVerification(
         logPrinter,
-        resultPrinter,
-        new ConfigHandle(boundaryConfig),
+        configHandle,
         callback
     );
 
@@ -40,34 +43,38 @@ public class InternalVerifierClient {
   }
 
   public @NotNull BoundaryResult availableContractDescriptions() {
-    return rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
-        .setAvailableContractDefinitions(AvailableContractDefinitions.newBuilder()));
+    return ConnectorResult.toBoundaryResult(rpcConnector.executeCallAndWait(
+        VerificationRequest.newBuilder()
+            .setAvailableContractDefinitions(AvailableContractDefinitions.newBuilder()),
+        "availableContractDescriptions"
+    ));
   }
 
   public @NotNull BoundaryResult runVerification(@NotNull ContractCaseBoundaryConfig configOverrides) {
     MaintainerLog.log("Verification run");
+    configHandle.setBoundaryConfig(configOverrides);
     var response = rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
         .setRunVerification(
             RunVerification.newBuilder()
                 .setConfig(
                     ConnectorOutgoingMapper.mapConfig(configOverrides)
                 )
-        )
+        ), "runVerification", VERIFY_TIMEOUT_SECONDS
     );
     MaintainerLog.log("Response from verification was: " + response.getResultType());
-    return response;
+    return ConnectorResult.toBoundaryResult(response);
   }
 
   private BoundaryResult begin(ContractCaseConfig wireConfig) {
     MaintainerLog.log("Beginning verification setup");
-    return rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
+    return ConnectorResult.toBoundaryResult(rpcConnector.executeCallAndWait(VerificationRequest.newBuilder()
         .setBeginVerification(BeginVerificationRequest.newBuilder()
             .addAllCallerVersions(
                 parentVersions.stream()
                     .map(ConnectorOutgoingMapper::map)
                     .toList())
             .setConfig(wireConfig)
-            .build()));
+            .build()), "begin"));
   }
 
 

@@ -6,14 +6,14 @@ import com.google.protobuf.StringValue;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import io.contract_testing.contractcase.ContractCaseCoreError;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
-import io.contract_testing.contractcase.case_boundary.BoundaryResult;
-import io.contract_testing.contractcase.case_boundary.BoundarySuccess;
-import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithAny;
-import io.contract_testing.contractcase.case_boundary.BoundarySuccessWithMap;
 import io.contract_testing.contractcase.case_boundary.PrintableMatchError;
 import io.contract_testing.contractcase.case_boundary.PrintableMessageError;
 import io.contract_testing.contractcase.case_boundary.PrintableTestTitle;
+import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorResult;
+import io.contract_testing.contractcase.edge.ConnectorSuccess;
+import io.contract_testing.contractcase.edge.ConnectorSuccessWithAny;
+import io.contract_testing.contractcase.edge.ConnectorSuccessWithMap;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.PrintMatchErrorRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.PrintMessageErrorRequest;
@@ -49,7 +49,8 @@ class ConnectorIncomingMapper {
           value.getListValue().getValuesList().stream().map(ConnectorIncomingMapper::map).toList();
       case KIND_NOT_SET -> throw new ContractCaseCoreError(
           "Attempted to map a value that doesn't have a set kind. This is probably a bug in the core library",
-          "Java ValueMapper");
+          "Java ValueMapper"
+      );
     };
   }
 
@@ -89,11 +90,12 @@ class ConnectorIncomingMapper {
   }
 
 
-  static BoundaryResult mapBoundaryResult(ContractCaseStream.BoundaryResult wireBoundaryResult) {
+  static ConnectorResult mapBoundaryResult(ContractCaseStream.BoundaryResult wireBoundaryResult) {
     if (wireBoundaryResult == null) {
       throw new ContractCaseCoreError(
           "There was a null boundaryResult. This is probably a bug in the connector server library.",
-          CONTRACT_CASE_JAVA_WRAPPER);
+          CONTRACT_CASE_JAVA_WRAPPER
+      );
     }
     var resultType = wireBoundaryResult.getValueCase();
     switch (resultType) {
@@ -102,40 +104,47 @@ class ConnectorIncomingMapper {
         if (wireFailure == null) {
           throw new ContractCaseCoreError(
               "undefined wireFailure in a boundary result. This is probably an error in the connector server library.",
-              CONTRACT_CASE_JAVA_WRAPPER);
+              CONTRACT_CASE_JAVA_WRAPPER
+          );
         }
-        return new BoundaryFailure(ConnectorIncomingMapper.map(wireFailure.getKind()),
+        return new ConnectorFailure(
+            ConnectorIncomingMapper.map(wireFailure.getKind()),
             ConnectorIncomingMapper.map(wireFailure.getMessage()),
-            ConnectorIncomingMapper.map(wireFailure.getLocation()));
+            ConnectorIncomingMapper.map(wireFailure.getLocation())
+        );
       }
       case SUCCESS -> {
-        return new BoundarySuccess();
+        return new ConnectorSuccess();
       }
       case SUCCESS_HAS_ANY -> {
         var wireWithAny = wireBoundaryResult.getSuccessHasAny();
         if (wireWithAny == null) {
           throw new ContractCaseCoreError(
               "undefined wire with any in a boundary result. This is probably an error in the connector server library.",
-              CONTRACT_CASE_JAVA_WRAPPER);
+              CONTRACT_CASE_JAVA_WRAPPER
+          );
         }
-        return new BoundarySuccessWithAny(ConnectorIncomingMapper.map(wireWithAny.getPayload()));
+        return new ConnectorSuccessWithAny(ConnectorIncomingMapper.map(wireWithAny.getPayload()));
       }
       case SUCCESS_HAS_MAP -> {
         var wireWithMap = wireBoundaryResult.getSuccessHasMap();
         if (wireWithMap == null) {
           throw new ContractCaseCoreError(
               "undefined wire with map in a boundary result. This is probably an error in the connector server library.",
-              CONTRACT_CASE_JAVA_WRAPPER);
+              CONTRACT_CASE_JAVA_WRAPPER
+          );
         }
-        return new BoundarySuccessWithMap(ConnectorIncomingMapper.map(wireWithMap.getMap()));
+        return new ConnectorSuccessWithMap(ConnectorIncomingMapper.map(wireWithMap.getMap()));
       }
       case VALUE_NOT_SET -> throw new ContractCaseCoreError(
           "There was an unset boundaryResult. This is probably a bug in the connector server library.",
-          CONTRACT_CASE_JAVA_WRAPPER);
+          CONTRACT_CASE_JAVA_WRAPPER
+      );
       default -> throw new ContractCaseCoreError(
           "There was a boundary result type that we didn't understand '" + resultType
               + "'. This is probably a bug in the connector server library.",
-          CONTRACT_CASE_JAVA_WRAPPER);
+          CONTRACT_CASE_JAVA_WRAPPER
+      );
     }
   }
 

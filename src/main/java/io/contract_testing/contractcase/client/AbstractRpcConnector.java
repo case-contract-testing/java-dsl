@@ -4,11 +4,11 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.GeneratedMessageV3.Builder;
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
+import io.contract_testing.contractcase.LogPrinter;
 import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.ILogPrinter;
-import io.contract_testing.contractcase.case_boundary.IResultPrinter;
-import io.contract_testing.contractcase.case_boundary.IRunTestCallback;
+import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorResult;
+import io.contract_testing.contractcase.edge.RunTestCallback;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BoundaryResult;
@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,18 +30,19 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
   private static final int DEFAULT_PORT = 50200;
 
-  private final StreamObserver<T> requestObserver;
   private final ConcurrentMap<String, CompletableFuture<BoundaryResult>> responseFutures = new ConcurrentHashMap<String, CompletableFuture<BoundaryResult>>();
   private final AtomicInteger nextId = new AtomicInteger();
+  private final SendingWorker<T> worker;
   private Status errorStatus;
+
+  private static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
 
   public AbstractRpcConnector(
-      @NotNull ILogPrinter logPrinter,
-      @NotNull IResultPrinter resultPrinter,
+      @NotNull LogPrinter logPrinter,
       @NotNull ConfigHandle configHandle,
-      @NotNull IRunTestCallback runTestCallback) {
-    this.requestObserver = createConnection(
+      @NotNull RunTestCallback runTestCallback) {
+    this.worker = new SendingWorker<T>(createConnection(
         ContractCaseGrpc.newStub(
             ManagedChannelBuilder
                 // TODO: Allow configuration of the port
@@ -50,11 +52,10 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
         new ContractResponseStreamObserver<>(
             this,
             logPrinter,
-            resultPrinter,
             configHandle,
             runTestCallback
         )
-    );
+    ));
   }
 
   abstract StreamObserver<T> createConnection(ContractCaseStub asyncStub,
@@ -66,10 +67,16 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
   abstract B makeInvokeTest(StringValue invokerId);
 
-  io.contract_testing.contractcase.case_boundary.BoundaryResult executeCallAndWait(B builder) {
-    final var id = "" + nextId.getAndIncrement();
+  ConnectorResult executeCallAndWait(B builder, String reason) {
+    return this.executeCallAndWait(builder, reason, DEFAULT_TIMEOUT_SECONDS);
+  }
+
+  ConnectorResult executeCallAndWait(B builder, String reason, int timeoutSeconds) {
+    final var id =
+        "[" + reason + " " + nextId.getAndIncrement() + " " + Thread.currentThread().getName()
+            + "]";
     if (errorStatus != null) {
-      return new BoundaryFailure(
+      return new ConnectorFailure(
           BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "ContractCase's internal connection failed before execution: " + errorStatus,
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
@@ -78,35 +85,51 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
     var future = new CompletableFuture<BoundaryResult>();
     responseFutures.put(id, future);
-    requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
+    worker.send(setId(builder, ConnectorOutgoingMapper.map(id)));
 
     try {
       MaintainerLog.log("Waiting for: " + id);
-      return ConnectorIncomingMapper.mapBoundaryResult(future.get(60, TimeUnit.SECONDS));
-    } catch (TimeoutException e) {
-      MaintainerLog.log("Timed out waiting for: " + id);
+      var mappedResult = ConnectorIncomingMapper.mapBoundaryResult(future.get(
+          timeoutSeconds,
+          TimeUnit.SECONDS
+      ));
+
       if (errorStatus != null) {
-        return new BoundaryFailure(
+        return new ConnectorFailure(
             BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
             "ContractCase's internal connection failed while waiting for a request '" + id + "':"
                 + errorStatus,
             MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
         );
       }
-      return new BoundaryFailure(
+
+      return mappedResult;
+    } catch (TimeoutException e) {
+      MaintainerLog.log("Timed out waiting for: " + id);
+      MaintainerLog.log("Remaining futures: " + responseFutures.keySet());
+
+      if (errorStatus != null) {
+        return new ConnectorFailure(
+            BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+            "ContractCase's internal connection failed while waiting for a request '" + id + "':"
+                + errorStatus,
+            MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
+        );
+      }
+      return new ConnectorFailure(
           BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "Timed out waiting for internal connection to ContractCase for message '" + id + "'",
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     } catch (ExecutionException e) {
       MaintainerLog.log("Execution exception waiting for: " + id + "\n" + e);
-      return new BoundaryFailure(
+      return new ConnectorFailure(
           BoundaryFailureKindConstants.CASE_CORE_ERROR,
           "Failed waiting for a response '" + id + "':" + e.getMessage(),
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     } catch (InterruptedException e) {
-      return new BoundaryFailure(
+      return new ConnectorFailure(
           BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "ContractCase was interrupted during its run. This isn't really a configuration error, it usually happens if a user killed the run.",
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
@@ -121,16 +144,32 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
     final var future = responseFutures.get(id);
     if (future == null) {
       throw new ContractCaseCoreError(
-          "There was no future with id '" + id + "'. This is a bug in the wrapper or the boundary.",
+          "There was no future with id '" + id
+              + "'. This is a bug in the wrapper or the boundary.",
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     }
     responseFutures.get(id).complete(result);
+    responseFutures.remove(id);
   }
 
+  private static final Semaphore sendMutex = new Semaphore(1);
+
   void sendResponse(B builder, String id) {
-    MaintainerLog.log("Sending (" + id + ") " + builder);
-    requestObserver.onNext(setId(builder, ConnectorOutgoingMapper.map(id)));
+    try {
+      sendMutex.acquire();
+    } catch (InterruptedException e) {
+      throw new ContractCaseCoreError(
+          "Interrupted while waiting to aquire the send mutex.\nIf this"
+              + " happened without you killing the test run, then there"
+              + " may be a threading bug in the ContractCase java DSL.");
+    }
+    try {
+
+      worker.send(setId(builder, ConnectorOutgoingMapper.map(id)));
+    } finally {
+      sendMutex.release();
+    }
   }
 
   void sendResponse(ResultResponse response, String id) {
@@ -142,7 +181,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
   }
 
   public void close() {
-    requestObserver.onCompleted();
+    worker.close();
   }
 
 
