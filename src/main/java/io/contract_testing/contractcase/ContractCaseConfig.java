@@ -120,6 +120,62 @@ public class ContractCaseConfig {
     this.stateHandlers = stateHandlers;
   }
 
+  public String getProviderName() {
+    return providerName;
+  }
+
+  public String getConsumerName() {
+    return consumerName;
+  }
+
+  public LogLevel getLogLevel() {
+    return logLevel;
+  }
+
+  public String getContractDir() {
+    return contractDir;
+  }
+
+  public String getContractFilename() {
+    return contractFilename;
+  }
+
+  public Boolean getPrintResults() {
+    return printResults;
+  }
+
+  public Boolean getThrowOnFail() {
+    return throwOnFail;
+  }
+
+  public PublishType getPublish() {
+    return publish;
+  }
+
+  public String getBrokerBaseUrl() {
+    return brokerBaseUrl;
+  }
+
+  public String getBrokerCiAccessToken() {
+    return brokerCiAccessToken;
+  }
+
+  public BrokerBasicAuthCredentials getBrokerBasicAuth() {
+    return brokerBasicAuth;
+  }
+
+  public String getBaseUrlUnderTest() {
+    return baseUrlUnderTest;
+  }
+
+  public TriggerGroups getTriggers() {
+    return triggers;
+  }
+
+  public Map<String, StateHandler> getStateHandlers() {
+    return stateHandlers;
+  }
+
   public static final class ContractCaseConfigBuilder {
 
     private String providerName;
@@ -215,9 +271,22 @@ public class ContractCaseConfig {
     }
 
     public ContractCaseConfig build() {
-      return new ContractCaseConfig(providerName, consumerName, logLevel, contractDir,
-          contractFilename, printResults, throwOnFail, publish, brokerBaseUrl, brokerCiAccessToken,
-          brokerBasicAuth, baseUrlUnderTest, triggers, stateHandlers);
+      return new ContractCaseConfig(
+          providerName,
+          consumerName,
+          logLevel,
+          contractDir,
+          contractFilename,
+          printResults,
+          throwOnFail,
+          publish,
+          brokerBaseUrl,
+          brokerCiAccessToken,
+          brokerBasicAuth,
+          baseUrlUnderTest,
+          triggers,
+          stateHandlers
+      );
     }
   }
 }

@@ -16,7 +16,7 @@ public class ContractDefiner {
     InternalDefinerClient definer = null;
     try {
       definer = new InternalDefinerClient(
-          BoundaryConfigMapper.map(config, TEST_RUN_ID),
+          ConnectorConfigMapper.map(config, TEST_RUN_ID),
           logPrinter,
           new BoundaryVersionGenerator().getVersions()
       );
@@ -27,15 +27,15 @@ public class ContractDefiner {
   }
 
   public void endRecord() {
-    BoundaryResultMapper.mapVoid(this.definer.endRecord());
+    ConnectorResultMapper.mapVoid(this.definer.endRecord());
   }
 
   public <T, M extends AnyMockDescriptor> void runExample(ExampleDefinition<M> definition,
       final @NotNull IndividualSuccessTestConfig<T> additionalConfig) {
     try {
-      BoundaryResultMapper.mapVoid(definer.runExample(
+      ConnectorResultMapper.mapVoid(definer.runExample(
           definition.toJSON(),
-          BoundaryConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)
+          ConnectorConfigMapper.mapSuccessExample(additionalConfig, TEST_RUN_ID)
       ));
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
@@ -60,9 +60,9 @@ public class ContractDefiner {
   public <T, M extends AnyMockDescriptor> void runThrowingExample(ExampleDefinition<M> definition,
       IndividualFailedTestConfig<T> additionalConfig) {
     try {
-      BoundaryResultMapper.mapVoid(definer.runRejectingExample(
+      ConnectorResultMapper.mapVoid(definer.runRejectingExample(
           definition.toJSON(),
-          BoundaryConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)
+          ConnectorConfigMapper.mapFailingExample(additionalConfig, TEST_RUN_ID)
       ));
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);

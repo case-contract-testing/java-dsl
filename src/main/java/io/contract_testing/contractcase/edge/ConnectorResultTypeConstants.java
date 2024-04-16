@@ -1,7 +1,6 @@
 package io.contract_testing.contractcase.edge;
 
 import io.contract_testing.contractcase.ContractCaseCoreError;
-import io.contract_testing.contractcase.case_boundary.BoundaryResultTypeConstants;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,18 +35,5 @@ public class ConnectorResultTypeConstants {
           "Java Wrapper"
       );
     }
-  }
-
-  public static void validate() {
-    checkEqual(RESULT_SUCCESS, BoundaryResultTypeConstants.RESULT_SUCCESS);
-    checkEqual(RESULT_FAILURE, BoundaryResultTypeConstants.RESULT_FAILURE);
-    checkEqual(
-        RESULT_SUCCESS_HAS_ANY_PAYLOAD,
-        BoundaryResultTypeConstants.RESULT_SUCCESS_HAS_ANY_PAYLOAD
-    );
-    checkEqual(
-        RESULT_SUCCESS_HAS_MAP_PAYLOAD,
-        BoundaryResultTypeConstants.RESULT_SUCCESS_HAS_MAP_PAYLOAD
-    );
   }
 }

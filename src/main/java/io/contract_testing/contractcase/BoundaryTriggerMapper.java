@@ -1,7 +1,9 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_boundary.BoundarySuccess;
-import io.contract_testing.contractcase.case_boundary.ITriggerFunction;
+
+import io.contract_testing.contractcase.edge.ConnectorExceptionMapper;
+import io.contract_testing.contractcase.edge.ConnectorSuccess;
+import io.contract_testing.contractcase.edge.ITriggerFunction;
 
 class BoundaryTriggerMapper {
 
@@ -14,16 +16,16 @@ class BoundaryTriggerMapper {
       try {
         ret = trigger.call(config);
       } catch (Throwable e) {
-        return BoundaryExceptionMapper.mapAsTriggerFailure(e);
+        return ConnectorExceptionMapper.mapAsTriggerFailure(e);
       }
 
       try {
         testResponseFunction.call(ret);
       } catch (Throwable e) {
-        return BoundaryExceptionMapper.mapAsVerifyFailure(e);
+        return ConnectorExceptionMapper.mapAsVerifyFailure(e);
       }
 
-      return new BoundarySuccess();
+      return new ConnectorSuccess();
     };
   }
 
@@ -32,17 +34,17 @@ class BoundaryTriggerMapper {
     return config -> {
       try {
         trigger.call(config);
-        return BoundaryExceptionMapper.mapAsTriggerFailure(
+        return ConnectorExceptionMapper.mapAsTriggerFailure(
             new RuntimeException("Expected the trigger to fail, but it did not"));
       } catch (Throwable triggerException) {
         try {
           testErrorResponseFunction.call(triggerException);
         } catch (Throwable verifyException) {
-          return BoundaryExceptionMapper.mapAsVerifyFailure(verifyException);
+          return ConnectorExceptionMapper.mapAsVerifyFailure(verifyException);
         }
       }
 
-      return new BoundarySuccess();
+      return new ConnectorSuccess();
     };
   }
 }

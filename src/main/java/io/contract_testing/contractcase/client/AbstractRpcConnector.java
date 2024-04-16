@@ -5,8 +5,8 @@ import com.google.protobuf.GeneratedMessageV3.Builder;
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorResult;
 import io.contract_testing.contractcase.edge.RunTestCallback;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
@@ -77,7 +77,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
             + "]";
     if (errorStatus != null) {
       return new ConnectorFailure(
-          BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+          ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "ContractCase's internal connection failed before execution: " + errorStatus,
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
@@ -96,7 +96,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
       if (errorStatus != null) {
         return new ConnectorFailure(
-            BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+            ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR,
             "ContractCase's internal connection failed while waiting for a request '" + id + "':"
                 + errorStatus,
             MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
@@ -110,27 +110,27 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
       if (errorStatus != null) {
         return new ConnectorFailure(
-            BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+            ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR,
             "ContractCase's internal connection failed while waiting for a request '" + id + "':"
                 + errorStatus,
             MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
         );
       }
       return new ConnectorFailure(
-          BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+          ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "Timed out waiting for internal connection to ContractCase for message '" + id + "'",
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     } catch (ExecutionException e) {
       MaintainerLog.log("Execution exception waiting for: " + id + "\n" + e);
       return new ConnectorFailure(
-          BoundaryFailureKindConstants.CASE_CORE_ERROR,
+          ConnectorFailureKindConstants.CASE_CORE_ERROR,
           "Failed waiting for a response '" + id + "':" + e.getMessage(),
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );
     } catch (InterruptedException e) {
       return new ConnectorFailure(
-          BoundaryFailureKindConstants.CASE_CONFIGURATION_ERROR,
+          ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR,
           "ContractCase was interrupted during its run. This isn't really a configuration error, it usually happens if a user killed the run.",
           MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
       );

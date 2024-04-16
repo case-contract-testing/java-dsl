@@ -3,8 +3,8 @@ package io.contract_testing.contractcase.client;
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest.Builder;
@@ -20,7 +20,7 @@ class RpcForDefinition extends AbstractRpcConnector<DefinitionRequest, Builder> 
         logPrinter,
         configHandle,
         (testName, invoker) -> new ConnectorFailure(
-            BoundaryFailureKindConstants.CASE_CORE_ERROR,
+            ConnectorFailureKindConstants.CASE_CORE_ERROR,
             "runTest isn't valid during contract definition",
             MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
         )

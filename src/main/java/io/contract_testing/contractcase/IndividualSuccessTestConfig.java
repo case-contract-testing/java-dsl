@@ -15,7 +15,8 @@ public class IndividualSuccessTestConfig<T> extends ContractCaseConfig {
       TestResponseFunction<T> testResponse) {
     super(providerName, consumerName, logLevel, contractDir, contractFilename, printResults,
         throwOnFail, publish, brokerBaseUrl, brokerCiAccessToken, brokerBasicAuth, baseUrlUnderTest,
-        triggers, stateHandlers);
+        triggers, stateHandlers
+    );
     this.trigger = trigger;
     this.testResponse = testResponse;
   }
@@ -133,7 +134,8 @@ public class IndividualSuccessTestConfig<T> extends ContractCaseConfig {
     public IndividualSuccessTestConfig<T> build() {
       return new IndividualSuccessTestConfig<>(providerName, consumerName, logLevel, contractDir,
           contractFilename, printResults, throwOnFail, publish, brokerBaseUrl, brokerCiAccessToken,
-          brokerBasicAuth, baseUrlUnderTest, triggers, stateHandlers, trigger, testResponse);
+          brokerBasicAuth, baseUrlUnderTest, triggers, stateHandlers, trigger, testResponse
+      );
     }
   }
 }

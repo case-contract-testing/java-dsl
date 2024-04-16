@@ -10,8 +10,10 @@ public class ContractCaseCoreError extends RuntimeException {
 
   public ContractCaseCoreError(@NotNull String message) {
     super(message);
-    this.location = Arrays.stream(Thread.currentThread().getStackTrace()).map(StackTraceElement::toString).collect(
-        Collectors.joining("\n"));
+    this.location = Arrays.stream(Thread.currentThread().getStackTrace())
+        .map(StackTraceElement::toString)
+        .collect(
+            Collectors.joining("\n"));
   }
 
   public ContractCaseCoreError(@NotNull String message, @NotNull String location) {
@@ -21,10 +23,10 @@ public class ContractCaseCoreError extends RuntimeException {
 
   public ContractCaseCoreError(Throwable e) {
     super(e.getMessage());
-    if(e instanceof ContractCaseCoreError) {
-      this.location = ((ContractCaseCoreError)e).getLocation();
+    if (e instanceof ContractCaseCoreError) {
+      this.location = ((ContractCaseCoreError) e).getLocation();
     } else {
-      this.location = BoundaryExceptionMapper.stackTraceToString(e);
+      this.location = ConnectorExceptionMapper.stackTraceToString(e);
     }
   }
 

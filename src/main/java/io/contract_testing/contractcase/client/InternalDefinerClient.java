@@ -5,12 +5,10 @@ import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.ma
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.contract_testing.contractcase.LogPrinter;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailure;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.BoundaryResult;
-import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
+import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorResult;
-import io.contract_testing.contractcase.edge.ConnectorResultTypeConstants;
+import io.contract_testing.contractcase.edge.ContractCaseConnectorConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BeginDefinitionRequest;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.DefinitionRequest;
@@ -28,64 +26,62 @@ public class InternalDefinerClient {
   private final ConfigHandle configHandle;
 
 
-  public InternalDefinerClient(final @NotNull ContractCaseBoundaryConfig boundaryConfig,
+  public InternalDefinerClient(final @NotNull ContractCaseConnectorConfig boundaryConfig,
       final @NotNull LogPrinter logPrinter,
       final @NotNull List<String> parentVersions) {
-    ConnectorResultTypeConstants.validate();
-
     this.parentVersions = parentVersions;
     this.configHandle = new ConfigHandle(boundaryConfig);
     this.rpcConnector = new RpcForDefinition(logPrinter, configHandle);
 
     // this is only here because we have to be able to map errors into exceptions
     // probably we should call begin outside the constructor to avoid this issue
-    RpcBoundaryResultMapper.map(begin(ConnectorOutgoingMapper.mapConfig(boundaryConfig)));
+    RpcConnectorResultMapper.map(begin(ConnectorOutgoingMapper.mapConfig(boundaryConfig)));
   }
 
-  public @NotNull BoundaryResult endRecord() {
+  public @NotNull ConnectorResult endRecord() {
     var result = rpcConnector.executeCallAndWait(DefinitionRequest.newBuilder()
         .setEndDefinition(EndDefinitionRequest.newBuilder().build()), "endRecord");
     rpcConnector.close();
 
-    return ConnectorResult.toBoundaryResult(result);
+    return result;
   }
 
-  public @NotNull BoundaryResult runExample(final @NotNull JsonNode definition,
-      final @NotNull ContractCaseBoundaryConfig runConfig) {
-    configHandle.setBoundaryConfig(runConfig);
-    return ConnectorResult.toBoundaryResult(rpcConnector.executeCallAndWait(mapRunExampleRequest(
+  public @NotNull ConnectorResult runExample(final @NotNull JsonNode definition,
+      final ContractCaseConnectorConfig runConfig) {
+    configHandle.setConnectorConfig(runConfig);
+    return rpcConnector.executeCallAndWait(mapRunExampleRequest(
         definition,
         runConfig
-    ), "runExample"));
+    ), "runExample");
   }
 
-  public @NotNull BoundaryResult runRejectingExample(final @NotNull JsonNode definition,
-      @NotNull ContractCaseBoundaryConfig runConfig) {
-    configHandle.setBoundaryConfig(runConfig);
-    return ConnectorResult.toBoundaryResult(rpcConnector.executeCallAndWait(
+  public @NotNull ConnectorResult runRejectingExample(final @NotNull JsonNode definition,
+      ContractCaseConnectorConfig runConfig) {
+    configHandle.setConnectorConfig(runConfig);
+    return rpcConnector.executeCallAndWait(
         mapRunRejectingExampleRequest(
             definition,
             runConfig
-        ), "runRejectingExample"));
+        ), "runRejectingExample");
   }
 
-  public @NotNull BoundaryResult stripMatchers(final @NotNull AnyMatcher matcherOrData) {
+  public @NotNull ConnectorResult stripMatchers(final @NotNull AnyMatcher matcherOrData) {
     // TODO: Implement this
-    return new BoundaryFailure(
-        BoundaryFailureKindConstants.CASE_CORE_ERROR,
+    return new ConnectorFailure(
+        ConnectorFailureKindConstants.CASE_CORE_ERROR,
         "stripMatchers not implemented", // TODO
         MaintainerLog.CONTRACT_CASE_JAVA_WRAPPER
     );
   }
 
-  private BoundaryResult begin(final ContractCaseConfig wireConfig) {
-    return ConnectorResult.toBoundaryResult(rpcConnector.executeCallAndWait(DefinitionRequest.newBuilder()
+  private ConnectorResult begin(final ContractCaseConfig wireConfig) {
+    return rpcConnector.executeCallAndWait(DefinitionRequest.newBuilder()
         .setBeginDefinition(BeginDefinitionRequest.newBuilder()
             .addAllCallerVersions(parentVersions.stream()
                 .map(ConnectorOutgoingMapper::map)
                 .toList())
             .setConfig(wireConfig)
-            .build()), "begin"));
+            .build()), "begin");
   }
 
 }

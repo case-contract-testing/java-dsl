@@ -10,9 +10,8 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.GeneratedMessageV3.Builder;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
-import io.contract_testing.contractcase.case_boundary.BoundaryResult;
-import io.contract_testing.contractcase.case_boundary.BoundaryStateHandler;
 import io.contract_testing.contractcase.edge.ConnectorResult;
+import io.contract_testing.contractcase.edge.ConnectorStateHandler;
 import io.contract_testing.contractcase.edge.ConnectorSuccess;
 import io.contract_testing.contractcase.edge.RunTestCallback;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractResponse;
@@ -62,7 +61,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
 
         rpcConnector.sendResponse(
             ResultResponse.newBuilder()
-                .setResult(mapResult(ConnectorResult.fromBoundaryResult(runStateHandler(
+                .setResult(mapResult(ConnectorResult.fromConnectorResult(runStateHandler(
                     stateHandlerRunRequest.getStateHandlerHandle()
                         .getStage(),
                     stateName,
@@ -136,7 +135,7 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
         rpcConnector.sendResponse(
             ResultResponse.newBuilder().setResult(
                 mapResult(
-                    ConnectorResult.fromBoundaryResult(
+                    ConnectorResult.fromConnectorResult(
                         configHandle.getTriggerFunction(handle).trigger(
                             ConnectorIncomingMapper.map(triggerFunctionRequest.getConfig()
                             )
@@ -202,9 +201,9 @@ class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builde
   }
 
   @NotNull
-  private static BoundaryResult runStateHandler(Stage stage,
+  private static ConnectorResult runStateHandler(Stage stage,
       String stateName,
-      BoundaryStateHandler handle) {
+      ConnectorStateHandler handle) {
     return switch (stage) {
       case STAGE_SETUP_UNSPECIFIED -> handle.setup();
       case STAGE_TEARDOWN -> handle.teardown();

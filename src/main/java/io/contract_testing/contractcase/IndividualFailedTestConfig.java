@@ -15,7 +15,8 @@ public class IndividualFailedTestConfig<T> extends ContractCaseConfig {
       TestErrorResponseFunction testErrorResponse) {
     super(providerName, consumerName, logLevel, contractDir, contractFilename, printResults,
         throwOnFail, publish, brokerBaseUrl, brokerCiAccessToken, brokerBasicAuth, baseUrlUnderTest,
-        triggers, stateHandlers);
+        triggers, stateHandlers
+    );
     this.trigger = trigger;
     this.testErrorResponse = testErrorResponse;
   }
@@ -133,7 +134,8 @@ public class IndividualFailedTestConfig<T> extends ContractCaseConfig {
     public IndividualFailedTestConfig<T> build() {
       return new IndividualFailedTestConfig<>(providerName, consumerName, logLevel, contractDir,
           contractFilename, printResults, throwOnFail, publish, brokerBaseUrl, brokerCiAccessToken,
-          brokerBasicAuth, baseUrlUnderTest, triggers, stateHandlers, trigger, testErrorResponse);
+          brokerBasicAuth, baseUrlUnderTest, triggers, stateHandlers, trigger, testErrorResponse
+      );
     }
   }
 }

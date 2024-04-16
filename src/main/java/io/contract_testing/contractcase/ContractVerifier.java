@@ -1,6 +1,8 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_boundary.BoundaryCrashMessage;
+import static io.contract_testing.contractcase.BoundaryCrashReporter.CRASH_MESSAGE_END;
+import static io.contract_testing.contractcase.BoundaryCrashReporter.CRASH_MESSAGE_START;
+
 import io.contract_testing.contractcase.client.InternalVerifierClient;
 import io.contract_testing.contractcase.client.MaintainerLog;
 import io.contract_testing.contractcase.edge.ConnectorExceptionMapper;
@@ -26,7 +28,7 @@ public class ContractVerifier {
     InternalVerifierClient verification = null;
     try {
       verification = new InternalVerifierClient(
-          BoundaryConfigMapper.map(config, "VERIFICATION"),
+          ConnectorConfigMapper.map(config, "VERIFICATION"),
           // TODO: Move the runTestCallback into the internals, maybe?
           new RunTestCallback() {
             @Override
@@ -49,13 +51,13 @@ public class ContractVerifier {
                   var kind = failure.getKind();
                   if (kind.equals(ConnectorFailureKindConstants.CASE_CORE_ERROR)) {
                     System.err.println(
-                        BoundaryCrashMessage.CRASH_MESSAGE_START
+                        CRASH_MESSAGE_START
                             + "\n\n"
                             + failure.getMessage()
                             + "\n"
                             + failure.getLocation()
                             + "\n\n"
-                            + BoundaryCrashMessage.CRASH_MESSAGE_END);
+                            + CRASH_MESSAGE_END);
                   } else if (kind.equals(ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR)) {
                     MaintainerLog.log("");
                     MaintainerLog.log("[CONFIGURATION ERROR] " + failure.getMessage());
@@ -82,7 +84,7 @@ public class ContractVerifier {
 
   public List<ContractDescription> availableContractDescriptions() {
     try {
-      return BoundaryResultMapper.mapListAvailableContracts(this.verifier.availableContractDescriptions());
+      return ConnectorResultMapper.mapListAvailableContracts(this.verifier.availableContractDescriptions());
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
       // This is actually unreachable, since the above method always throws
@@ -92,14 +94,14 @@ public class ContractVerifier {
 
   public void runVerification(ContractCaseConfig configOverrides) {
     try {
-      BoundaryResultMapper.mapVoid(this.verifier.runVerification(
-          BoundaryConfigMapper.map(configOverrides, "VERIFICATION")));
+      ConnectorResultMapper.mapVoid(this.verifier.runVerification(
+          ConnectorConfigMapper.map(configOverrides, "VERIFICATION")));
     } catch (Throwable e) {
       BoundaryCrashReporter.handleAndRethrow(e);
     }
     if (!failures.isEmpty()) {
       try {
-        BoundaryResultMapper.mapVoid(ConnectorResult.toBoundaryResult(failures.get(0)));
+        ConnectorResultMapper.mapVoid(ConnectorResult.toConnectorResult(failures.get(0)));
       } catch (Throwable e) {
         BoundaryCrashReporter.handleAndRethrow(e);
       }

@@ -2,9 +2,9 @@ package io.contract_testing.contractcase;
 
 import com.diogonunes.jcolor.AnsiFormat;
 import com.diogonunes.jcolor.Attribute;
-import io.contract_testing.contractcase.case_boundary.PrintableMatchError;
-import io.contract_testing.contractcase.case_boundary.PrintableMessageError;
-import io.contract_testing.contractcase.case_boundary.PrintableTestTitle;
+import io.contract_testing.contractcase.edge.PrintableMatchError;
+import io.contract_testing.contractcase.edge.PrintableMessageError;
+import io.contract_testing.contractcase.edge.PrintableTestTitle;
 import org.jetbrains.annotations.NotNull;
 
 public class LogPrinter {
@@ -82,7 +82,7 @@ public class LogPrinter {
   }
 
   private String spaces(int num, String toPad) {
-    return toPad.replace("\n", "\n" + " ".repeat(Math.max(0, num)));
+    return toPad.replace("\n", "\n" + " " .repeat(Math.max(0, num)));
   }
 
   public void printMatchError(

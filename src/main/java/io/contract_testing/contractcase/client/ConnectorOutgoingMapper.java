@@ -12,13 +12,13 @@ import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
 import io.contract_testing.contractcase.ContractCaseCoreError;
-import io.contract_testing.contractcase.case_boundary.BoundaryFailureKindConstants;
-import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
 import io.contract_testing.contractcase.edge.ConnectorFailure;
+import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorResult;
 import io.contract_testing.contractcase.edge.ConnectorResultTypeConstants;
 import io.contract_testing.contractcase.edge.ConnectorSuccessWithAny;
 import io.contract_testing.contractcase.edge.ConnectorSuccessWithMap;
+import io.contract_testing.contractcase.edge.ContractCaseConnectorConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ContractCaseConfig.UsernamePassword;
@@ -55,14 +55,14 @@ class ConnectorOutgoingMapper {
     return BoolValue.newBuilder().setValue(s).build();
   }
 
-  static ContractCaseConfig mapConfig(final @NotNull ContractCaseBoundaryConfig config) {
+  static ContractCaseConfig mapConfig(final @NotNull ContractCaseConnectorConfig config) {
     var builder = ContractCaseConfig.newBuilder();
 
     if (config.getBrokerBasicAuth() != null) {
       var auth = config.getBrokerBasicAuth();
       builder.setBrokerBasicAuth(UsernamePassword.newBuilder()
-          .setPassword(ConnectorOutgoingMapper.map(auth.getPassword()))
-          .setUsername(ConnectorOutgoingMapper.map(auth.getUsername()))
+          .setPassword(ConnectorOutgoingMapper.map(auth.password()))
+          .setUsername(ConnectorOutgoingMapper.map(auth.username()))
           .build());
     }
 
@@ -87,8 +87,8 @@ class ConnectorOutgoingMapper {
           .build());
     }
 
-    if (config.getStateHandlers() != null) {
-      config.getStateHandlers().forEach((key, value) -> {
+    if (config.getConnectorStateHandlers() != null) {
+      config.getConnectorStateHandlers().forEach((key, value) -> {
         builder.addStateHandlers(StateHandlerHandle.newBuilder()
             .setHandle(ConnectorOutgoingMapper.map(key))
             .setStage(Stage.STAGE_SETUP_UNSPECIFIED)
@@ -122,14 +122,14 @@ class ConnectorOutgoingMapper {
       builder.setContractFilename(ConnectorOutgoingMapper.map(config.getContractFilename()));
     }
     if (config.getLogLevel() != null) {
-      builder.setLogLevel(ConnectorOutgoingMapper.map(config.getLogLevel()));
+      builder.setLogLevel(ConnectorOutgoingMapper.map(config.getLogLevel().toString()));
     }
     if (config.getProviderName() != null) {
       builder.setProviderName(ConnectorOutgoingMapper.map(config.getProviderName()));
     }
 
     if (config.getPublish() != null) {
-      builder.setPublish(ConnectorOutgoingMapper.map(config.getPublish()));
+      builder.setPublish(ConnectorOutgoingMapper.map(config.getPublish().toString()));
     }
 
     return builder.build();
@@ -138,7 +138,7 @@ class ConnectorOutgoingMapper {
 
   @NotNull
   static ContractCaseStream.DefinitionRequest.Builder mapRunExampleRequest(JsonNode definition,
-      @NotNull ContractCaseBoundaryConfig runConfig) {
+      @NotNull ContractCaseConnectorConfig runConfig) {
     final var structBuilder = getStructBuilder(definition);
     return DefinitionRequest.newBuilder()
         .setRunExample(RunExampleRequest.newBuilder()
@@ -148,7 +148,7 @@ class ConnectorOutgoingMapper {
   }
 
   static ContractCaseStream.DefinitionRequest.Builder mapRunRejectingExampleRequest(JsonNode definition,
-      ContractCaseBoundaryConfig runConfig) {
+      ContractCaseConnectorConfig runConfig) {
     final var structBuilder = getStructBuilder(definition);
     return DefinitionRequest.newBuilder()
         .setRunExample(RunExampleRequest.newBuilder()
@@ -163,12 +163,7 @@ class ConnectorOutgoingMapper {
     var resultType = result.getResultType();
     MaintainerLog.log("Mapping result type: " + resultType);
     if (resultType == null) {
-      try {
-        throw new ContractCaseCoreError("" + result);
-      } catch (Throwable e) {
-        MaintainerLog.log("Null was at: ");
-        e.printStackTrace();
-      }
+      throw new ContractCaseCoreError("Got a null result type at: " + result);
     }
     return switch (resultType) {
       case ConnectorResultTypeConstants.RESULT_SUCCESS ->
@@ -200,7 +195,7 @@ class ConnectorOutgoingMapper {
       default -> {
         yield ContractCaseStream.BoundaryResult.newBuilder()
             .setFailure(ResultFailure.newBuilder()
-                .setKind(ConnectorOutgoingMapper.map(BoundaryFailureKindConstants.CASE_CORE_ERROR))
+                .setKind(ConnectorOutgoingMapper.map(ConnectorFailureKindConstants.CASE_CORE_ERROR))
                 .setLocation(ConnectorOutgoingMapper.map(CONTRACT_CASE_JAVA_WRAPPER))
                 .setMessage(ConnectorOutgoingMapper.map(
                     "Tried to map an unknown result type: '" + resultType

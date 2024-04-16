@@ -1,12 +1,11 @@
 package io.contract_testing.contractcase;
 
-import io.contract_testing.contractcase.case_boundary.ContractCaseBoundaryConfig;
-import io.contract_testing.contractcase.case_boundary.UserNamePassword;
+import io.contract_testing.contractcase.edge.ContractCaseConnectorConfig;
 import org.jetbrains.annotations.NotNull;
 
-class BoundaryConfigMapper {
+class ConnectorConfigMapper {
 
-  static <T> ContractCaseBoundaryConfig mapSuccessExample(
+  static <T> ContractCaseConnectorConfig mapSuccessExample(
       final IndividualSuccessTestConfig<T> config,
       final String testRunId) {
     var builder = makeBuilder(config, testRunId);
@@ -28,7 +27,7 @@ class BoundaryConfigMapper {
     return builder.build();
   }
 
-  public static <T> ContractCaseBoundaryConfig mapFailingExample(
+  public static <T> ContractCaseConnectorConfig mapFailingExample(
       IndividualFailedTestConfig<T> config,
       String testRunId) {
     var builder = makeBuilder(config, testRunId);
@@ -50,16 +49,16 @@ class BoundaryConfigMapper {
     return builder.build();
   }
 
-  static ContractCaseBoundaryConfig map(final ContractCaseConfig config,
+  static ContractCaseConnectorConfig map(final ContractCaseConfig config,
       final String testRunId) {
 
     return makeBuilder(config, testRunId).build();
   }
 
   @NotNull
-  private static ContractCaseBoundaryConfig.Builder makeBuilder(ContractCaseConfig config,
+  private static ContractCaseConnectorConfig.Builder makeBuilder(ContractCaseConfig config,
       String testRunId) {
-    var builder = ContractCaseBoundaryConfig.builder().testRunId(testRunId);
+    var builder = ContractCaseConnectorConfig.builder().testRunId(testRunId);
 
     if (config.brokerBaseUrl != null) {
       builder.brokerBaseUrl(config.brokerBaseUrl);
@@ -74,7 +73,7 @@ class BoundaryConfigMapper {
     }
 
     if (config.logLevel != null) {
-      builder.logLevel(config.logLevel.toString());
+      builder.logLevel(config.logLevel);
     }
 
     if (config.contractDir != null) {
@@ -94,16 +93,14 @@ class BoundaryConfigMapper {
     }
 
     if (config.publish != null) {
-      builder.publish(config.publish.toString());
+      builder.publish(config.publish);
     }
     if (config.brokerCiAccessToken != null) {
       builder.brokerCiAccessToken(config.brokerCiAccessToken);
     }
 
     if (config.brokerBasicAuth != null) {
-      builder.brokerBasicAuth(
-          UserNamePassword.builder().password(config.brokerBasicAuth.password())
-              .username(config.brokerBasicAuth.username()).build());
+      builder.brokerBasicAuth(config.brokerBasicAuth);
     }
 
     if (config.baseUrlUnderTest != null) {
@@ -111,11 +108,11 @@ class BoundaryConfigMapper {
     }
 
     if (config.triggers != null) {
-      builder.triggerAndTests(BoundaryTriggerGroupMapper.map(config.triggers));
+      builder.triggerAndTests(ConnectorTriggerGroupMapper.map(config.triggers));
     }
 
     if (config.stateHandlers != null) {
-      builder.stateHandlers(BoundaryStateHandlerMapper.map(config.stateHandlers));
+      builder.stateHandlers(ConnectorStateHandlerMapper.map(config.stateHandlers));
     }
     return builder;
   }
