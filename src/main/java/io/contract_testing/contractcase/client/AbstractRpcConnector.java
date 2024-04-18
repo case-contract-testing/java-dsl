@@ -13,6 +13,7 @@ import io.contract_testing.contractcase.grpc.ContractCaseGrpc;
 import io.contract_testing.contractcase.grpc.ContractCaseGrpc.ContractCaseStub;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.BoundaryResult;
 import io.contract_testing.contractcase.grpc.ContractCaseStream.ResultResponse;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -35,6 +36,8 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
   private final SendingWorker<T> worker;
   private Status errorStatus;
 
+  private ManagedChannel channel;
+
   private static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
 
@@ -42,13 +45,13 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
       @NotNull LogPrinter logPrinter,
       @NotNull ConfigHandle configHandle,
       @NotNull RunTestCallback runTestCallback) {
+    this.channel = ManagedChannelBuilder
+        // TODO: Allow configuration of the port
+        .forAddress("localhost", DEFAULT_PORT)
+        .usePlaintext()
+        .build();
     this.worker = new SendingWorker<T>(createConnection(
-        ContractCaseGrpc.newStub(
-            ManagedChannelBuilder
-                // TODO: Allow configuration of the port
-                .forAddress("localhost", DEFAULT_PORT)
-                .usePlaintext()
-                .build()),
+        ContractCaseGrpc.newStub(channel),
         new ContractResponseStreamObserver<>(
             this,
             logPrinter,
@@ -182,6 +185,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
 
   public void close() {
     worker.close();
+    this.channel.shutdown();
   }
 
 
