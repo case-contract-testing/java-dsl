@@ -16,7 +16,7 @@ repositories {
 }
 
 def caseCoreVersion = "0.15.6"
-def grpcVersion = "1.62.2"
+def grpcVersion = "1.63.0"
 
 dependencies {
     api "io.contract-testing.contractcase:case_example_mock_types:${caseCoreVersion}"
@@ -60,7 +60,7 @@ protobuf {
         // If you don't specify it, protoc will try to use "protoc-gen-grpc" from
         // system search path.
         'grpc' {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.60.1'
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.63.0'
         }
     }
     protoc {
