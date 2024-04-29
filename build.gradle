@@ -24,7 +24,7 @@ dependencies {
     implementation 'com.diogonunes:JColor:5.5.1'
     implementation 'com.google.protobuf:protobuf-java:3.25.3'
     implementation 'com.google.protobuf:protobuf-java-util:3.25.3'
-    implementation 'com.google.protobuf:protoc:3.25.3'
+    implementation 'com.google.protobuf:protoc:4.26.1'
     implementation "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
     implementation "io.grpc:grpc-core:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
@@ -65,7 +65,7 @@ protobuf {
     }
     protoc {
         // Download from repositories
-        artifact = 'com.google.protobuf:protoc:3.25.1'
+        artifact = 'com.google.protobuf:protoc:4.26.1'
     }
     generateProtoTasks {
         all().configureEach { task ->
