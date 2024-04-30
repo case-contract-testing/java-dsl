@@ -34,7 +34,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    testImplementation 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
+    testImplementation 'com.google.protobuf:protobuf-gradle-plugin:0.9.4'
     // api("org.junit.jupiter:junit-jupiter-api")
     // compileOnly("org.junit.jupiter:junit-jupiter")
 }
