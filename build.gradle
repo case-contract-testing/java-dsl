@@ -23,7 +23,7 @@ dependencies {
     api "io.contract-testing.contractcase:test-equivalence-matchers:${caseCoreVersion}"
     implementation 'com.diogonunes:JColor:5.5.1'
     implementation 'com.google.protobuf:protobuf-java:3.25.3'
-    implementation 'com.google.protobuf:protobuf-java-util:3.25.3'
+    implementation 'com.google.protobuf:protobuf-java-util:4.26.1'
     implementation 'com.google.protobuf:protoc:3.25.3'
     implementation "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
     implementation "io.grpc:grpc-core:${grpcVersion}"
