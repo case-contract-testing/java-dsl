@@ -12,7 +12,7 @@ import io.contract_testing.contractcase.grpc.ContractCaseStream.VerificationRequ
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-public class InternalVerifierClient {
+public class InternalVerifierClient implements AutoCloseable {
 
   private final List<String> parentVersions;
   private final RpcForVerification rpcConnector;
@@ -74,5 +74,8 @@ public class InternalVerifierClient {
             .build()), "begin");
   }
 
-
+  @Override
+  public void close() {
+    rpcConnector.close();
+  }
 }

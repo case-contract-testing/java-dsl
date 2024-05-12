@@ -5,6 +5,7 @@ import static io.contract_testing.contractcase.BoundaryCrashReporter.CRASH_MESSA
 
 import io.contract_testing.contractcase.client.InternalVerifierClient;
 import io.contract_testing.contractcase.client.MaintainerLog;
+import io.contract_testing.contractcase.client.server.ContractCaseProcess;
 import io.contract_testing.contractcase.edge.ConnectorExceptionMapper;
 import io.contract_testing.contractcase.edge.ConnectorFailure;
 import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-public class ContractVerifier {
+public class ContractVerifier implements AutoCloseable {
 
   private final InternalVerifierClient verifier;
 
@@ -24,6 +25,7 @@ public class ContractVerifier {
 
   public ContractVerifier(ContractCaseConfig config) {
     LogPrinter logPrinter = new LogPrinter();
+    ContractCaseProcess.getInstance().start();
 
     InternalVerifierClient verification = null;
     try {
@@ -107,5 +109,10 @@ public class ContractVerifier {
       }
 
     }
+  }
+
+  @Override
+  public void close() {
+    verifier.close();
   }
 }

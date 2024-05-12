@@ -30,6 +30,15 @@ public class ContractCaseCoreError extends RuntimeException {
     }
   }
 
+  public ContractCaseCoreError(@NotNull String message, Throwable cause) {
+    super(message, cause);
+    if (cause instanceof ContractCaseCoreError) {
+      this.location = ((ContractCaseCoreError) cause).getLocation();
+    } else {
+      this.location = ConnectorExceptionMapper.stackTraceToString(cause);
+    }
+  }
+
   public String getLocation() {
     return location;
   }

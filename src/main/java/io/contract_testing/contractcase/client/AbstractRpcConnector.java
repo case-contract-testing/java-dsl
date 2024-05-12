@@ -5,6 +5,7 @@ import com.google.protobuf.GeneratedMessageV3.Builder;
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
+import io.contract_testing.contractcase.client.server.ContractCaseProcess;
 import io.contract_testing.contractcase.edge.ConnectorFailure;
 import io.contract_testing.contractcase.edge.ConnectorFailureKindConstants;
 import io.contract_testing.contractcase.edge.ConnectorResult;
@@ -29,9 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder<B>> {
 
-  private static final int DEFAULT_PORT = 50200;
-
-  private final ConcurrentMap<String, CompletableFuture<BoundaryResult>> responseFutures = new ConcurrentHashMap<String, CompletableFuture<BoundaryResult>>();
+  private final ConcurrentMap<String, CompletableFuture<BoundaryResult>> responseFutures = new ConcurrentHashMap<>();
   private final AtomicInteger nextId = new AtomicInteger();
   private final SendingWorker<T> worker;
   private Status errorStatus;
@@ -46,8 +45,7 @@ abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder
       @NotNull ConfigHandle configHandle,
       @NotNull RunTestCallback runTestCallback) {
     this.channel = ManagedChannelBuilder
-        // TODO: Allow configuration of the port
-        .forAddress("localhost", DEFAULT_PORT)
+        .forAddress("localhost", ContractCaseProcess.getInstance().getPortNumber())
         .usePlaintext()
         .build();
     this.worker = new SendingWorker<T>(createConnection(

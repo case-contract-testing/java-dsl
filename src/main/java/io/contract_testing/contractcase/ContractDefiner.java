@@ -3,6 +3,7 @@ package io.contract_testing.contractcase;
 import io.contract_testing.contractcase.IndividualFailedTestConfig.IndividualFailedTestConfigBuilder;
 import io.contract_testing.contractcase.case_example_mock_types.mocks.base.AnyMockDescriptor;
 import io.contract_testing.contractcase.client.InternalDefinerClient;
+import io.contract_testing.contractcase.client.server.ContractCaseProcess;
 import org.jetbrains.annotations.NotNull;
 
 public class ContractDefiner {
@@ -12,6 +13,8 @@ public class ContractDefiner {
 
 
   public ContractDefiner(final @NotNull ContractCaseConfig config) {
+    ContractCaseProcess.getInstance().start();
+    
     LogPrinter logPrinter = new LogPrinter();
     InternalDefinerClient definer = null;
     try {
