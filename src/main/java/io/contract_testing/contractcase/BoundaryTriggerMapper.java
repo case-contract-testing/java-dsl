@@ -12,15 +12,23 @@ class BoundaryTriggerMapper {
       TestResponseFunction<T> testResponseFunction) {
 
     return config -> {
+
+      SetupInfo setupInfo;
+      try {
+        setupInfo = SetupInfo.from(config);
+      } catch (Throwable e) {
+        return ConnectorExceptionMapper.map(e);
+      }
+
       T ret;
       try {
-        ret = trigger.call(config);
+        ret = trigger.call(setupInfo);
       } catch (Throwable e) {
         return ConnectorExceptionMapper.mapAsTriggerFailure(e);
       }
 
       try {
-        testResponseFunction.call(ret);
+        testResponseFunction.call(ret, setupInfo);
       } catch (Throwable e) {
         return ConnectorExceptionMapper.mapAsVerifyFailure(e);
       }
@@ -32,13 +40,19 @@ class BoundaryTriggerMapper {
   static <T> ITriggerFunction map(Trigger<T> trigger,
       TestErrorResponseFunction testErrorResponseFunction) {
     return config -> {
+      SetupInfo setupInfo;
       try {
-        trigger.call(config);
+        setupInfo = SetupInfo.from(config);
+      } catch (Throwable e) {
+        return ConnectorExceptionMapper.map(e);
+      }
+      try {
+        trigger.call(setupInfo);
         return ConnectorExceptionMapper.mapAsTriggerFailure(
             new RuntimeException("Expected the trigger to fail, but it did not"));
       } catch (Throwable triggerException) {
         try {
-          testErrorResponseFunction.call(triggerException);
+          testErrorResponseFunction.call(triggerException, setupInfo);
         } catch (Throwable verifyException) {
           return ConnectorExceptionMapper.mapAsVerifyFailure(verifyException);
         }

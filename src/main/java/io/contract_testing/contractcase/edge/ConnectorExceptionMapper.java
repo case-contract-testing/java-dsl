@@ -1,5 +1,6 @@
 package io.contract_testing.contractcase.edge;
 
+import io.contract_testing.contractcase.ContractCaseConfigurationError;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -13,7 +14,10 @@ public class ConnectorExceptionMapper {
 
   public static ConnectorFailure map(Throwable e) {
     var failure = new ConnectorFailure(
-        e.getClass().getName(),
+        e instanceof ContractCaseConfigurationError
+            ? ConnectorFailureKindConstants.CASE_CONFIGURATION_ERROR
+            : ConnectorFailureKindConstants.CASE_CORE_ERROR
+        ,
         e.getMessage(),
         stackTraceToString(e)
     );

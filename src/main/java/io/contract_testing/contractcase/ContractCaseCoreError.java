@@ -31,7 +31,7 @@ public class ContractCaseCoreError extends RuntimeException {
   }
 
   public ContractCaseCoreError(@NotNull String message, Throwable cause) {
-    super(message, cause);
+    super(message + "(" + cause.getMessage() + ")", cause);
     if (cause instanceof ContractCaseCoreError) {
       this.location = ((ContractCaseCoreError) cause).getLocation();
     } else {
