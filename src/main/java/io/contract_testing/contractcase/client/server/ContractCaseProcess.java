@@ -70,8 +70,7 @@ public class ContractCaseProcess {
 
     final List<String> serverStartCommand = List.of(
         "node",
-        // TODO: Generate this path instead
-        "/Users/home/office/contract-case/contract-case/node_modules/.bin/case-connector"
+        ConnectorExtractor.extractCaseConnector()
     );
 
     try {
