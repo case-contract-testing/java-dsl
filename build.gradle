@@ -4,6 +4,7 @@ plugins {
     id 'java-library'
     id 'java-library-distribution'
     id 'maven-publish'
+    id 'org.jreleaser' version '1.12.0'
     id "com.google.protobuf" version "0.9.4"
 
 }
@@ -103,6 +104,9 @@ java {
 publishing {
     publications {
         contractcase(MavenPublication) {
+            groupId = 'io.contract-testing.contractcase'
+            artifactId = 'contract-case'
+            version = version
             from components.java
             versionMapping {
                 usage('java-api') {
@@ -112,16 +116,35 @@ publishing {
                     fromResolutionResult()
                 }
             }
+
+            pom {
+                name = 'contract-case'
+                description = 'ContractCase Java DSL'
+                url = 'https://case.contract-testing.io/'
+                inceptionYear = '2022'
+                licenses {
+                    license {
+                        name = 'BSD-3-Clause'
+                        url = 'https://spdx.org/licenses/BSD-3-Clause.html'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'TimothyJones'
+                        name = 'Timothy Jones'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/case-contract-testing/java-dsl.git'
+                    developerConnection = 'scm:git:ssh://github.com/case-contract-testing/java-dsl.git'
+                    url = 'https://github.com/case-contract-testing/java-dsl'
+                }
+            }
         }
     }
     repositories {
         maven {
-            name = "OSSRH"
-            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
-            }
+            url = layout.buildDirectory.dir('staging-deploy')
         }
         mavenLocal()
     }
@@ -137,4 +160,29 @@ publishing {
             }
         }
     }*/
+}
+
+jreleaser {
+    signing {
+        active = 'ALWAYS'
+        armored = true
+    }
+    deploy {
+        maven {
+            nexus2 {
+                'maven-central' {
+                    active = 'ALWAYS'
+                    url = 'https://s01.oss.sonatype.org/service/local'
+                    snapshotUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+                    closeRepository = true
+                    releaseRepository = true
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_PASSWORD")
+                    applyMavenCentralRules = true
+
+                    stagingRepository('build/staging-deploy')
+                }
+            }
+        }
+    }
 }
