@@ -6,8 +6,11 @@ class BoundaryVersionGenerator {
 
 
   List<String> getVersions() {
-    var version = getClass().getPackage().getImplementationVersion();
-    return List.of("Java-DSL@" + (version != null ? version : "UNKNOWN"));
+    var version = this.getClass()
+        .getClassLoader()
+        .getDefinedPackage("io.contract_testing.contractcase")
+        .getImplementationVersion();
+    return List.of("Java-DSL@" + (version != null ? version : "unknown"));
   }
 
 }

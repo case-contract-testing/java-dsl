@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 plugins {
     id 'java-library'
     id 'java-library-distribution'
@@ -5,8 +7,8 @@ plugins {
     id "com.google.protobuf" version "0.9.4"
 
 }
-group 'io.contract-testing.contractcase'
-version "0.0.1" // x-release-please-version
+group = 'io.contract-testing.contractcase'
+version = "0.0.1" // x-release-please-version
 
 sourceCompatibility = '17'
 
@@ -35,8 +37,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
     testImplementation 'com.google.protobuf:protobuf-gradle-plugin:0.9.4'
-    // api("org.junit.jupiter:junit-jupiter-api")
-    // compileOnly("org.junit.jupiter:junit-jupiter")
 }
 
 test {
@@ -45,6 +45,16 @@ test {
 
 jar {
     duplicatesStrategy(DuplicatesStrategy.WARN)
+    manifest {
+        attributes(
+                'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Implementation-Version': version,
+                'Implementation-Title': 'ContractCase Java DSL, for defining and verifying contracts with ContractCase',
+                'Specification-Title': 'ContractCase Java DSL, for defining and verifying contracts with ContractCase',
+                'Specification-Version': version,
+        )
+    }
 }
 
 sourceSets {
@@ -103,30 +113,28 @@ publishing {
                 }
             }
         }
-        repositories {
-            maven {
-                name = "OSSRH"
-                url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                credentials {
-                    username = System.getenv("MAVEN_USERNAME")
-                    password = System.getenv("MAVEN_PASSWORD")
-                }
-            }
-        }
-        /*
-        contractcase(MavenPublication) {
-            from components.java
-            versionMapping {
-                usage('java-api') {
-                    fromResolutionOf('runtimeClasspath')
-                }
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
-        }*/
     }
     repositories {
+        maven {
+            name = "OSSRH"
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
         mavenLocal()
     }
+    /*
+    contractcase(MavenPublication) {
+        from components.java
+        versionMapping {
+            usage('java-api') {
+                fromResolutionOf('runtimeClasspath')
+            }
+            usage('java-runtime') {
+                fromResolutionResult()
+            }
+        }
+    }*/
 }
