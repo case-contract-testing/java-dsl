@@ -21,6 +21,6 @@ Read the [documentation here](https://case.contract-testing.io/docs/intro/).
 <!-- x-release-please-start-version -->
 _build.gradle_:
 ```groovy
-testImplementation "io.contract-testing.contractcase:contractcase:0.0.1"
+testImplementation "io.contract-testing.contractcase:contractcase:0.1.0"
 ```
 <!-- x-release-please-end -->
