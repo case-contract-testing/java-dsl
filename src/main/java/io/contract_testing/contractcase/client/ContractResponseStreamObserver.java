@@ -7,7 +7,7 @@ import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.ma
 import static io.contract_testing.contractcase.client.ConnectorOutgoingMapper.mapResultResponse;
 
 import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.GeneratedMessageV3.Builder;
+import com.google.protobuf.GeneratedMessage;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
 import io.contract_testing.contractcase.edge.ConnectorResult;
@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jetbrains.annotations.NotNull;
 
-class ContractResponseStreamObserver<T extends AbstractMessage, B extends Builder<B>> implements
+class ContractResponseStreamObserver<T extends AbstractMessage, B extends GeneratedMessage.Builder<B>> implements
     StreamObserver<ContractResponse> {
 
   private final AbstractRpcConnector<T, B> rpcConnector;

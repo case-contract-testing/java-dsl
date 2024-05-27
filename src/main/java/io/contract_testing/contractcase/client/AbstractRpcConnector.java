@@ -1,7 +1,7 @@
 package io.contract_testing.contractcase.client;
 
 import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.GeneratedMessageV3.Builder;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.StringValue;
 import io.contract_testing.contractcase.ContractCaseCoreError;
 import io.contract_testing.contractcase.LogPrinter;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
-abstract class AbstractRpcConnector<T extends AbstractMessage, B extends Builder<B>> {
+abstract class AbstractRpcConnector<T extends AbstractMessage, B extends GeneratedMessage.Builder<B>> {
 
   private final ConcurrentMap<String, CompletableFuture<BoundaryResult>> responseFutures = new ConcurrentHashMap<>();
   private final AtomicInteger nextId = new AtomicInteger();
