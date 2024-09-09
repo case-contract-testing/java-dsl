@@ -1,3 +1,6 @@
+# Archived: Now part of the [main repository](https://github.com/case-contract-testing/contract-case/tree/main/packages/dsl-java)
+----
+
 # ContractCase Contract Testing Framework
 
 [![Build and test](https://github.com/case-contract-testing//java-dsl/actions/workflows/build-and-test.yml/badge.svg?branch=main)](https://github.com/case-contract-testing/java-dsl/actions/workflows/build-and-test.yml)
